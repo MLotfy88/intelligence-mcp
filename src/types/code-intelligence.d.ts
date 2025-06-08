@@ -11,7 +11,7 @@ interface CodeIntelligenceArgs {
 interface InspectionResult {
   phase: 'inspection';
   fileContent: string | null;
-  ast: any | null;
+  ast: ts.SourceFile | null;
   metrics: {
     complexity: number;
     dependencies: string[];

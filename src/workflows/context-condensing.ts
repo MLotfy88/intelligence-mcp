@@ -6,7 +6,7 @@ interface ContextCondensingArgs {
   compression_rate?: number; // e.g., 0.5 for 50% compression
 }
 
-export function getContextCondensingToolDefinition(config: Config): { name: string; description: string; schema: any; handler: any } {
+export function getContextCondensingToolDefinition(config: Config): { name: string; description: string; schema: object; handler: (args: ContextCondensingArgs, context: { call: (toolName: string, toolArgs: Record<string, any>) => Promise<any> }) => Promise<{ status: string; message: string; results: { file: string; original_size: number; condensed_size: number; condensed_content: string; priority: string }[] }> } { // The 'any' type is used for 'toolArgs' and the Promise return type because MCP tool calls can have diverse and dynamic argument/return types, making a strict union type overly complex and difficult to maintain.
   return {
     name: 'context_condensing_process',
     description: 'Condenses context from specified files based on a compression rate.',
@@ -26,7 +26,7 @@ export function getContextCondensingToolDefinition(config: Config): { name: stri
       },
       required: ['target_files']
     },
-    handler: async (args: ContextCondensingArgs, context: { call: (toolName: string, toolArgs: any) => Promise<any> }) => {
+    handler: async (args: ContextCondensingArgs, context: { call: (toolName: string, toolArgs: Record<string, any>) => Promise<any> }): Promise<{ status: string; message: string; results: { file: string; original_size: number; condensed_size: number; condensed_content: string; priority: string }[] }> => { // The 'any' type is used for 'toolArgs' and the Promise return type because MCP tool calls can have diverse and dynamic argument/return types, making a strict union type overly complex and difficult to maintain.
       logger.info(`Starting context condensing for files: ${args.target_files.join(', ')}`);
 
       try {

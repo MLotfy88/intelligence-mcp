@@ -10,7 +10,7 @@ import { getDailyDigestToolDefinition } from '../workflows/daily-digest.js';
 import { getContextCondensingToolDefinition } from '../workflows/context-condensing.js';
 import { logger } from '../utils/logger.js';
 
-export function getToolDefinitions(config: Config): Array<{ name: string; description: string; schema: object; handler: any }> { // TODO: Define a more specific union type for handlers
+export function getToolDefinitions(config: Config): Array<{ name: string; description: string; schema: object; handler: any }> { // The 'handler' type is 'any' because MCP tool handlers can have diverse and dynamic argument/return types, making a strict union type overly complex and difficult to maintain.
   const tools = [
     getCodeIntelligenceToolDefinition(),
     getMemoryBankToolDefinition(config),

@@ -1,7 +1,7 @@
 interface ESLintArgs {
   file_path: string;
   auto_fix: boolean;
-  rules_override?: Record<string, any>;
+  rules_override?: Record<string, any>; // ESLint rules can have various types of values
 }
 
 interface LintMessageFix {

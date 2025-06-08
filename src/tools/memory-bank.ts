@@ -29,7 +29,7 @@ export function getMemoryBankToolDefinition(_config: Config): { name: string; de
       },
       required: ['action', 'file_category']
     },
-    handler: async (args: MemoryBankArgs) => {
+    handler: async (args: MemoryBankArgs): Promise<{ content: string } | { success: boolean; path: string } | { success: boolean; timestamp: string } | { archived: Array<{ file: string; archived: string | null; status: string; error?: string }> } | { results: Array<{ file: string; category: FileCategory; content_preview: string }> }> => {
       logger.info(`Memory bank operation: ${args.action} in category ${args.file_category}`);
       
       try {

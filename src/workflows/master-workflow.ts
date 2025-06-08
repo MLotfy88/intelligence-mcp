@@ -2,7 +2,7 @@ import { Config } from '../utils/config-loader.js';
 import { logger } from '../utils/logger.js';
 import { WorkflowArgs } from '../types/master-workflow.d.js';
 
-export function getMasterWorkflowToolDefinition(_config: Config): { name: string; description: string; schema: any; handler: any } {
+export function getMasterWorkflowToolDefinition(_config: Config): { name: string; description: string; schema: object; handler: (args: WorkflowArgs, context: { call: (toolName: string, toolArgs: Record<string, any>) => Promise<any> }) => Promise<any> } { // The 'any' type is used for 'toolArgs' and the Promise return type because MCP tool calls can have diverse and dynamic argument/return types, making a strict union type overly complex and difficult to maintain.
   return {
     name: 'roo_code_workflow',
     description: 'Execute complete analysis workflow',
@@ -28,7 +28,7 @@ export function getMasterWorkflowToolDefinition(_config: Config): { name: string
       },
       required: ['workflow_type', 'target_files']
     },
-    handler: async (args: WorkflowArgs, context: { call: (toolName: string, toolArgs: any) => Promise<any> }) => {
+    handler: async (args: WorkflowArgs, context: { call: (toolName: string, toolArgs: Record<string, any>) => Promise<any> }): Promise<any> => { // The 'any' type is used for 'toolArgs' and the Promise return type because MCP tool calls can have diverse and dynamic argument/return types, making a strict union type overly complex and difficult to maintain.
       logger.info(`Starting workflow: ${args.workflow_type}`);
 
       try {
@@ -52,7 +52,7 @@ export function getMasterWorkflowToolDefinition(_config: Config): { name: string
   };
 }
 
-async function fullAnalysis(args: WorkflowArgs, call: (toolName: string, toolArgs: any) => Promise<any>, config: Config) {
+async function fullAnalysis(args: WorkflowArgs, call: (toolName: string, toolArgs: Record<string, any>) => Promise<any>, config: Config): Promise<any> { // The 'any' type is used for 'toolArgs' and the Promise return type because MCP tool calls can have diverse and dynamic argument/return types, making a strict union type overly complex and difficult to maintain.
   // Phase 1: Inspection
   const inspectionResults = await call('code_intelligence_analyze', {
     phase: 'inspection',
@@ -74,7 +74,7 @@ async function fullAnalysis(args: WorkflowArgs, call: (toolName: string, toolArg
       search_type: 'error_solution',
       max_results: 10
     });
-    (diagnosisResults as any).webContext = searchResults;
+    (diagnosisResults as Record<string, any>).webContext = searchResults;
   }
 
   // Run linting
@@ -113,12 +113,12 @@ async function fullAnalysis(args: WorkflowArgs, call: (toolName: string, toolArg
     toolResults: {
       eslint: lintResults,
       typescript: tsResults,
-      webSearch: (diagnosisResults as any).webContext
+      webSearch: (diagnosisResults as Record<string, any>).webContext
     }
   };
 }
 
-async function quickCheck(args: WorkflowArgs, call: (toolName: string, toolArgs: any) => Promise<any>, _config: Config) {
+async function quickCheck(args: WorkflowArgs, call: (toolName: string, toolArgs: Record<string, any>) => Promise<any>, _config: Config): Promise<any> { // The 'any' type is used for 'toolArgs' and the Promise return type because MCP tool calls can have diverse and dynamic argument/return types, making a strict union type overly complex and difficult to maintain.
   const [lintResults, tsResults] = await Promise.all([
     call('eslint_analysis', {
       file_path: args.target_files[0],
@@ -138,23 +138,23 @@ async function quickCheck(args: WorkflowArgs, call: (toolName: string, toolArgs:
   };
 }
 
-async function contextCondensing(args: WorkflowArgs, call: (toolName: string, toolArgs: any) => Promise<any>, _config: Config) {
+async function contextCondensing(args: WorkflowArgs, call: (toolName: string, toolArgs: Record<string, any>) => Promise<any>, _config: Config): Promise<any> { // The 'any' type is used for 'toolArgs' and the Promise return type because MCP tool calls can have diverse and dynamic argument/return types, making a strict union type overly complex and difficult to maintain.
   return await call('context_condensing_process', {
     target_files: args.target_files,
     compression_rate: _config.priorities.default_compression_rate
   });
 }
 
-async function dailyDigest(args: WorkflowArgs, call: (toolName: string, toolArgs: any) => Promise<any>, _config: Config) {
+async function dailyDigest(args: WorkflowArgs, call: (toolName: string, toolArgs: Record<string, any>) => Promise<any>, _config: Config): Promise<any> { // The 'any' type is used for 'toolArgs' and the Promise return type because MCP tool calls can have diverse and dynamic argument/return types, making a strict union type overly complex and difficult to maintain.
   return await call('daily_digest_generator', {});
 }
 
-function generateSearchQuery(diagnosisResults: any): string {
+function generateSearchQuery(diagnosisResults: Record<string, any>): string {
   // Implement search query generation based on diagnosis results
   return `typescript ${diagnosisResults.errors?.[0]?.message || 'error'}`;
 }
 
-async function storeResults(args: WorkflowArgs, results: any, call: (toolName: string, toolArgs: any) => Promise<any>, _config: Config) {
+async function storeResults(args: WorkflowArgs, results: Record<string, any>, call: (toolName: string, toolArgs: Record<string, any>) => Promise<any>, _config: Config): Promise<void> { // The 'any' type is used for 'toolArgs' because MCP tool calls can have diverse and dynamic argument/return types, making a strict union type overly complex and difficult to maintain.
   await call('memory_bank_manager', {
     action: 'write',
     file_category: 'technical',
@@ -163,7 +163,7 @@ async function storeResults(args: WorkflowArgs, results: any, call: (toolName: s
   });
 }
 
-function generateQuickSummary(lintResults: any, tsResults: any) {
+function generateQuickSummary(lintResults: Record<string, any>, tsResults: Record<string, any>): { totalIssues: number; needsAttention: boolean } {
   return {
     totalIssues: (lintResults.summary?.totalErrors || 0) +
                  (tsResults.summary?.errorCount || 0),

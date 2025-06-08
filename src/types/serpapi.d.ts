@@ -4,6 +4,18 @@ interface WebSearchArgs {
   max_results: number;
 }
 
+interface SerpApiOrganicResult {
+  title: string;
+  link: string;
+  snippet: string;
+  source?: string;
+}
+
+interface SerpApiResult {
+  organic_results?: SerpApiOrganicResult[];
+  // Add other top-level properties from SerpAPI response if needed
+}
+
 interface SearchResult {
   title: string;
   link: string;
@@ -11,7 +23,6 @@ interface SearchResult {
   source?: string;
   description?: string;
   solution?: string;
-  reference?: string;
 }
 
 interface FormattedSearchResults {
@@ -22,5 +33,7 @@ interface FormattedSearchResults {
 export {
   WebSearchArgs,
   SearchResult,
-  FormattedSearchResults
+  FormattedSearchResults,
+  SerpApiOrganicResult,
+  SerpApiResult
 };

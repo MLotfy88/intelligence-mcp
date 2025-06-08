@@ -2,7 +2,7 @@ import { Config } from '../utils/config-loader.js';
 import { logger } from '../utils/logger.js';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { WebSearchArgs, FormattedSearchResults } from '../types/serpapi.d.js';
+import { WebSearchArgs, FormattedSearchResults, SerpApiResult, SerpApiOrganicResult } from '../types/serpapi.d.js';
 
 export function getWebSearchToolDefinition(config: Config): { name: string; description: string; schema: object; handler: (args: WebSearchArgs) => Promise<FormattedSearchResults> } {
   return {
@@ -123,7 +123,7 @@ function parseDuration(duration: string): number {
   }
 }
 
-function formatResults(data: any, searchType: string): FormattedSearchResults {
+function formatResults(data: SerpApiResult, searchType: string): FormattedSearchResults {
   // Format results based on search type
   switch (searchType) {
     case 'code':
@@ -137,10 +137,10 @@ function formatResults(data: any, searchType: string): FormattedSearchResults {
   }
 }
 
-function formatCodeResults(data: any): FormattedSearchResults {
+function formatCodeResults(data: SerpApiResult): FormattedSearchResults {
   return {
     type: 'code',
-    results: data.organic_results?.map((result: any) => ({
+    results: data.organic_results?.map((result: SerpApiOrganicResult) => ({
       title: result.title,
       link: result.link,
       snippet: result.snippet,
@@ -149,10 +149,10 @@ function formatCodeResults(data: any): FormattedSearchResults {
   };
 }
 
-function formatDocResults(data: any): FormattedSearchResults {
+function formatDocResults(data: SerpApiResult): FormattedSearchResults {
   return {
     type: 'documentation',
-    results: data.organic_results?.map((result: any) => ({
+    results: data.organic_results?.map((result: SerpApiOrganicResult) => ({
       title: result.title,
       link: result.link,
       description: result.snippet
@@ -160,21 +160,21 @@ function formatDocResults(data: any): FormattedSearchResults {
   };
 }
 
-function formatErrorResults(data: any): FormattedSearchResults {
+function formatErrorResults(data: SerpApiResult): FormattedSearchResults {
   return {
     type: 'error_solution',
-    results: data.organic_results?.map((result: any) => ({
+    results: data.organic_results?.map((result: SerpApiOrganicResult) => ({
       title: result.title,
-      solution: result.snippet,
-      reference: result.link
+      link: result.link,
+      solution: result.snippet
     })) || []
   };
 }
 
-function formatGeneralResults(data: any): FormattedSearchResults {
+function formatGeneralResults(data: SerpApiResult): FormattedSearchResults {
   return {
     type: 'general',
-    results: data.organic_results?.map((result: any) => ({
+    results: data.organic_results?.map((result: SerpApiOrganicResult) => ({
       title: result.title,
       link: result.link,
       snippet: result.snippet

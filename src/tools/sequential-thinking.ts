@@ -20,7 +20,7 @@ export function getSequentialThinkingToolDefinition(config: Config): { name: str
       },
       required: ["problem_statement"],
     },
-    handler: async (args: SequentialThinkingArgs) => {
+    handler: async (args: SequentialThinkingArgs): Promise<{ status: string; message: string; problem_statement: string; thinking_depth: number; include_alternatives: boolean; steps: string[]; decisions: string[]; alternatives: string[]; }> => {
       logger.info(`Executing sequential_thinking_process with problem: ${args.problem_statement}`);
       const thinkingConfig = config.integrations.sequential_thinking;
 

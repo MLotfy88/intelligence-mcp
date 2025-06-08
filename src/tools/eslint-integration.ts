@@ -25,7 +25,7 @@ export function getESLintToolDefinition(config: Config): { name: string; descrip
       },
       required: ['file_path']
     },
-    handler: async (args: ESLintArgs) => {
+    handler: async (args: ESLintArgs): Promise<FormattedResult> => {
       logger.info(`Running ESLint analysis on ${args.file_path}`);
       
       try {

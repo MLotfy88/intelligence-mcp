@@ -50,7 +50,7 @@ function extractErrorDetails(error: unknown): ErrorDetails {
     return {
       message: error.message,
       stack: error.stack,
-      code: (error as any).code,
+      code: (error as { code?: string }).code,
       severity: 'error',
       timestamp
     };

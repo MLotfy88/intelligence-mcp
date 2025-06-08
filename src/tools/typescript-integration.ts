@@ -6,7 +6,7 @@ import {
   DiagnosticResult
 } from '../types/typescript-integration.d.js';
 
-export function getTypeScriptToolDefinition(config: Config): { name: string; description: string; schema: any; handler: any } {
+export function getTypeScriptToolDefinition(config: Config): { name: string; description: string; schema: object; handler: (args: TypeScriptArgs) => Promise<DiagnosticResult> } {
   return {
     name: 'typescript_diagnostics',
     description: 'TypeScript type checking and diagnostics',

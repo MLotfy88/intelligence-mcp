@@ -3,7 +3,7 @@ import { logger } from '../utils/logger.js';
 
 type DailyDigestArgs = Record<string, never>;
 
-export function getDailyDigestToolDefinition(_config: Config): { name: string; description: string; schema: any; handler: any } {
+export function getDailyDigestToolDefinition(_config: Config): { name: string; description: string; schema: object; handler: (args: DailyDigestArgs, context: { call: (toolName: string, toolArgs: Record<string, any>) => Promise<any> }) => Promise<{ generated: boolean; timestamp: string; message: string }> } { // The 'any' type is used for 'toolArgs' and the Promise return type because MCP tool calls can have diverse and dynamic argument/return types, making a strict union type overly complex and difficult to maintain.
   return {
     name: 'daily_digest_generator',
     description: 'Generates a daily summary of completed tasks, key decisions, errors, and deadlines.',
@@ -12,7 +12,7 @@ export function getDailyDigestToolDefinition(_config: Config): { name: string; d
       properties: {},
       required: []
     },
-    handler: async (args: DailyDigestArgs, context: { call: (toolName: string, toolArgs: any) => Promise<any> }) => {
+    handler: async (args: DailyDigestArgs, context: { call: (toolName: string, toolArgs: Record<string, any>) => Promise<any> }): Promise<{ generated: boolean; timestamp: string; message: string }> => { // The 'any' type is used for 'toolArgs' and the Promise return type because MCP tool calls can have diverse and dynamic argument/return types, making a strict union type overly complex and difficult to maintain.
       logger.info('Generating daily digest');
 
       try {

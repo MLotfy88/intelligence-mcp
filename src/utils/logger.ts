@@ -54,6 +54,7 @@ class Logger {
     const timestamp = this.options.includeTimestamp ? `[${entry.timestamp}] ` : '';
     const details = entry.details ? JSON.stringify(entry.details, null, 2) : '';
 
+    // eslint-disable-next-line no-console
     console.log(`${color}${timestamp}${entry.level.toUpperCase()}: ${entry.message}${reset}${details ? '\n' + details : ''}`);
   }
 
