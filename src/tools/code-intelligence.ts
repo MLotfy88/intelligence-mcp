@@ -1,6 +1,8 @@
 import { logger } from '../utils/logger.js';
 import * as fs from 'fs/promises';
 import * as ts from 'typescript';
+import { Config, loadConfig } from '../utils/config-loader.js'; // Import Config and loadConfig
+import { getTypeScriptToolDefinition } from './typescript-integration.js'; // Import the TypeScript tool
 import {
   CodeIntelligenceArgs,
   InspectionResult,
@@ -28,9 +30,13 @@ export function getCodeIntelligenceToolDefinition(): { name: string; description
         priority_level: {
           type: 'string',
           enum: ['P0', 'P1', 'P2']
+        },
+        diagnosis_results: { // Correctly placed inside properties
+          type: 'object',
+          description: 'Results from the diagnosis phase, used for generating execution solutions.'
         }
       },
-      required: ['phase', 'file_path']
+      required: ['phase', 'file_path'] // Correctly placed inside schema
     },
     handler: executeCodeIntelligence
   };
@@ -46,7 +52,9 @@ async function executeCodeIntelligence(args: CodeIntelligenceArgs): Promise<Anal
       case 'diagnosis':
         return await diagnosisPhase(args);
       case 'execution':
-        return await executionPhase(args);
+        // If execution phase is requested directly, run diagnosis first
+        const diagnosisResultForExecution = await diagnosisPhase(args);
+        return await executionPhase(args, diagnosisResultForExecution);
       case 'all':
         return await fullAnalysisPipeline(args);
       default:
@@ -75,11 +83,17 @@ async function inspectionPhase(args: CodeIntelligenceArgs): Promise<InspectionRe
       true
     );
 
-    // Basic dependency detection (imports)
-    const importRegex = /(?:import|require)\s*['"]([^'"]+)['"]/g;
-    let match;
-    while ((match = importRegex.exec(fileContent)) !== null) {
-      dependencies.push(match[1]);
+    // Enhanced dependency detection using AST
+    function visit(node: ts.Node) {
+      if (ts.isImportDeclaration(node) && ts.isStringLiteral(node.moduleSpecifier)) {
+        dependencies.push(node.moduleSpecifier.text);
+      } else if (ts.isCallExpression(node) && ts.isIdentifier(node.expression) && node.expression.text === 'require' && node.arguments.length > 0 && ts.isStringLiteral(node.arguments[0])) {
+        dependencies.push(node.arguments[0].text);
+      }
+      ts.forEachChild(node, visit);
+    }
+    if (ast) {
+      ts.forEachChild(ast, visit);
     }
 
   } catch (error) {
@@ -104,10 +118,27 @@ async function diagnosisPhase(args: CodeIntelligenceArgs): Promise<DiagnosisResu
   const suggestions: Array<{ message: string; line: number }> = [];
 
   try {
+    const config: Config = await loadConfig(); // Load the configuration
+    const tsTool = getTypeScriptToolDefinition(config); // Pass config to the tool definition
+    const tsDiagnostics = await tsTool.handler({
+      file_path: args.file_path,
+      check_type: 'all',
+      include_suggestions: true
+    });
+
+    tsDiagnostics.diagnostics.errors.forEach(diag => {
+      errors.push({ message: diag.message, line: diag.position.line, severity: 'error' });
+    });
+    tsDiagnostics.diagnostics.warnings.forEach(diag => {
+      warnings.push({ message: diag.message, line: diag.position.line, severity: 'warning' });
+    });
+    tsDiagnostics.diagnostics.suggestions.forEach(diag => {
+      suggestions.push({ message: diag.message, line: diag.position.line });
+    });
+
+    // Add existing simple keyword-based checks as well
     const fileContent = await fs.readFile(args.file_path, 'utf-8');
     const lines = fileContent.split('\n');
-
-    // Simple keyword-based error/warning/suggestion detection
     lines.forEach((lineContent, index) => {
       const lineNumber = index + 1;
       if (lineContent.includes('TODO')) {
@@ -119,11 +150,10 @@ async function diagnosisPhase(args: CodeIntelligenceArgs): Promise<DiagnosisResu
       if (lineContent.includes('console.log')) {
         suggestions.push({ message: 'Consider removing console.log in production code.', line: lineNumber });
       }
-      // Add more sophisticated checks here, e.g., regex for common anti-patterns
     });
 
   } catch (error) {
-    logger.error(`Failed to read file ${args.file_path} during diagnosis: ${(error as Error).message}`);
+    logger.error(`Failed to perform TypeScript diagnostics or read file ${args.file_path} during diagnosis: ${(error as Error).message}`);
     // Continue with partial results
   }
 
@@ -135,9 +165,32 @@ async function diagnosisPhase(args: CodeIntelligenceArgs): Promise<DiagnosisResu
   };
 }
 
-async function executionPhase(args: CodeIntelligenceArgs): Promise<ExecutionResult> {
+async function executionPhase(args: CodeIntelligenceArgs, diagnosis: DiagnosisResult): Promise<ExecutionResult> {
   const solutions: Array<{ type: string; description: string; code?: string }> = [];
   const priority = args.priority_level || 'P2';
+
+  // Generate solutions based on diagnosis results
+  if (diagnosis.errors.length > 0) {
+    solutions.push({
+      type: 'error_resolution',
+      description: `Address the following critical errors: ${diagnosis.errors.map(e => e.message).join('; ')}`,
+      code: '// Example: Implement error handling or fix logic'
+    });
+  }
+  if (diagnosis.warnings.length > 0) {
+    solutions.push({
+      type: 'code_improvement',
+      description: `Review and refactor code based on warnings: ${diagnosis.warnings.map(w => w.message).join('; ')}`,
+      code: '// Example: Refactor deprecated functions or improve readability'
+    });
+  }
+  if (diagnosis.suggestions.length > 0) {
+    solutions.push({
+      type: 'best_practice_adherence',
+      description: `Consider implementing the following suggestions for best practices: ${diagnosis.suggestions.map(s => s.message).join('; ')}`,
+      code: '// Example: Add JSDoc comments or optimize loops'
+    });
+  }
 
   // This is a simplified example. In a real scenario, this would involve
   // more sophisticated logic to generate code or detailed instructions
@@ -168,7 +221,7 @@ async function executionPhase(args: CodeIntelligenceArgs): Promise<ExecutionResu
 async function fullAnalysisPipeline(args: CodeIntelligenceArgs): Promise<{ inspection: InspectionResult; diagnosis: DiagnosisResult; execution: ExecutionResult; summary: { timestamp: string; file: string; priority: string; } }> {
   const inspection = await inspectionPhase(args);
   const diagnosis = await diagnosisPhase(args);
-  const execution = await executionPhase(args);
+  const execution = await executionPhase(args, diagnosis); // Pass diagnosis to executionPhase
   
   return {
     inspection,

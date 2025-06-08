@@ -7,6 +7,7 @@ import { handleError } from './utils/error-handler.js';
 import { logger } from './utils/logger.js';
 import { readFile } from 'fs/promises';
 import express from 'express';
+import cors from 'cors'; // Import cors
 
 async function main() {
   try {
@@ -35,6 +36,13 @@ async function main() {
 
     const app = express();
     app.use(express.json()); // For parsing application/json
+
+    // Configure CORS for specific origins and methods
+    app.use(cors({
+      origin: 'http://localhost:3000', // Replace with your frontend origin
+      methods: ['GET', 'POST', 'PUT', 'DELETE'],
+      allowedHeaders: ['Content-Type', 'Authorization']
+    }));
 
     const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
 

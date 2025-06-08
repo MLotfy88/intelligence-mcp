@@ -6,6 +6,7 @@ interface CodeIntelligenceArgs {
   file_path: string;
   context_files?: string[];
   priority_level?: PriorityLevel;
+  diagnosis_results?: DiagnosisResult; // Add diagnosis_results to the arguments
 }
 
 interface InspectionResult {

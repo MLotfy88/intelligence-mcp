@@ -8,6 +8,7 @@ import { getSequentialThinkingToolDefinition } from './sequential-thinking.js';
 import { getMasterWorkflowToolDefinition } from '../workflows/master-workflow.js';
 import { getDailyDigestToolDefinition } from '../workflows/daily-digest.js';
 import { getContextCondensingToolDefinition } from '../workflows/context-condensing.js';
+import { getConversationSummarizerToolDefinition } from './conversation-summarizer.js';
 import { logger } from '../utils/logger.js';
 
 export function getToolDefinitions(config: Config): Array<{ name: string; description: string; schema: object; handler: any }> { // The 'handler' type is 'any' because MCP tool handlers can have diverse and dynamic argument/return types, making a strict union type overly complex and difficult to maintain.
@@ -20,7 +21,8 @@ export function getToolDefinitions(config: Config): Array<{ name: string; descri
     getSequentialThinkingToolDefinition(config),
     getMasterWorkflowToolDefinition(config),
     getDailyDigestToolDefinition(config),
-    getContextCondensingToolDefinition(config)
+    getContextCondensingToolDefinition(config),
+    getConversationSummarizerToolDefinition()
   ];
   logger.info('All tool definitions collected successfully');
   return tools;

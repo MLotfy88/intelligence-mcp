@@ -94,7 +94,9 @@ async function fullAnalysis(args: WorkflowArgs, call: (toolName: string, toolArg
   const executionResults = await call('code_intelligence_analyze', {
     phase: 'execution',
     file_path: args.target_files[0],
-    priority_level: args.priority_override || 'P1'
+    priority_level: args.priority_override || 'P1',
+    // Pass diagnosis results to the execution phase for more informed solutions
+    diagnosis_results: diagnosisResults // Assuming code_intelligence_analyze's execution phase can accept this
   });
 
   // Store results
@@ -150,8 +152,23 @@ async function dailyDigest(args: WorkflowArgs, call: (toolName: string, toolArgs
 }
 
 function generateSearchQuery(diagnosisResults: Record<string, any>): string {
-  // Implement search query generation based on diagnosis results
-  return `typescript ${diagnosisResults.errors?.[0]?.message || 'error'}`;
+  let queryParts: string[] = [];
+
+  if (diagnosisResults.errors && diagnosisResults.errors.length > 0) {
+    queryParts.push(`error: ${diagnosisResults.errors[0].message}`);
+  }
+  if (diagnosisResults.warnings && diagnosisResults.warnings.length > 0) {
+    queryParts.push(`warning: ${diagnosisResults.warnings[0].message}`);
+  }
+  if (diagnosisResults.suggestions && diagnosisResults.suggestions.length > 0) {
+    queryParts.push(`suggestion: ${diagnosisResults.suggestions[0].message}`);
+  }
+
+  if (queryParts.length === 0) {
+    return 'code analysis best practices';
+  }
+
+  return `typescript ${queryParts.join(' ')}`;
 }
 
 async function storeResults(args: WorkflowArgs, results: Record<string, any>, call: (toolName: string, toolArgs: Record<string, any>) => Promise<any>, _config: Config): Promise<void> { // The 'any' type is used for 'toolArgs' because MCP tool calls can have diverse and dynamic argument/return types, making a strict union type overly complex and difficult to maintain.
