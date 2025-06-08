@@ -41,7 +41,7 @@ async function main() {
     app.use(cors({
       origin: 'http://localhost:3000', // Replace with your frontend origin
       methods: ['GET', 'POST', 'PUT', 'DELETE'],
-      allowedHeaders: ['Content-Type', 'Authorization']
+      allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
     }));
 
     const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
