@@ -1,0 +1,29 @@
+version: 2.0
+memory:
+  enabled: true
+  files:
+    core: []
+    dynamic: []
+    planning: []
+    technical: []
+    auto_generated: []
+  archive:
+    path: "archive/"
+    retention_period: "30d"
+priorities:
+  P0: [code_modifications, handover_decisions]
+  P1: [memory_bank_updates, critical_conflicts]
+  P2: [general_discussion]
+integrations:
+  serpapi:
+    api_key: "" # سيتم تعيينه عبر SERP_API_KEY
+    rate_limit: 100
+    cache_duration: "1h"
+  eslint:
+    config_path: ".eslintrc.js"
+    auto_fix: true
+    severity_threshold: "warning"
+  typescript:
+    tsconfig_path: "tsconfig.json"
+    check_on_save: true
+    diagnostic_level: "error"
