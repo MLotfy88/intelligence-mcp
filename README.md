@@ -259,6 +259,29 @@ await client.call("context_condensing", {
 });
 ```
 
+## API Endpoints
+
+### Streaming Tool Endpoint (POST /api/tool)
+For clients that support Server-Sent Events (SSE). Requires Accept header to include both `application/json` and `text/event-stream`.
+
+### Simple Tool Endpoint (POST /api/tool-simple) 
+For standard HTTP clients that don't support streaming. Only requires Accept header to include `application/json`.
+
+Example using fetch:
+```javascript
+const response = await fetch('http://your-server/api/tool-simple', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json'
+  },
+  body: JSON.stringify({
+    tool: 'your_tool_name',
+    args: { /* tool arguments */ }
+  })
+});
+```
+
 ## ⚠️ Common Troubleshooting
 
 -   **Connection Issues**:
