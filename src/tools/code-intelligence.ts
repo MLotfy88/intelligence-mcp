@@ -1,10 +1,7 @@
-import { Config } from '../utils/config-loader.js';
 import { logger } from '../utils/logger.js';
 import * as fs from 'fs/promises';
 import * as ts from 'typescript';
 import {
-  Phase,
-  PriorityLevel,
   CodeIntelligenceArgs,
   InspectionResult,
   DiagnosisResult,
@@ -12,7 +9,7 @@ import {
   AnalysisResult
 } from '../types/code-intelligence.d.js';
 
-export function getCodeIntelligenceToolDefinition(): { name: string; description: string; schema: any; handler: any } {
+export function getCodeIntelligenceToolDefinition(): { name: string; description: string; schema: object; handler: (args: CodeIntelligenceArgs) => Promise<AnalysisResult | { inspection: InspectionResult; diagnosis: DiagnosisResult; execution: ExecutionResult; summary: { timestamp: string; file: string; priority: string; } }> } {
   return {
     name: 'code_intelligence_analyze',
     description: 'Three-phase code analysis: Inspection → Diagnosis → Execution',
@@ -39,7 +36,7 @@ export function getCodeIntelligenceToolDefinition(): { name: string; description
   };
 }
 
-async function executeCodeIntelligence(args: CodeIntelligenceArgs): Promise<AnalysisResult | { inspection: InspectionResult; diagnosis: DiagnosisResult; execution: ExecutionResult }> {
+async function executeCodeIntelligence(args: CodeIntelligenceArgs): Promise<AnalysisResult | { inspection: InspectionResult; diagnosis: DiagnosisResult; execution: ExecutionResult; summary: { timestamp: string; file: string; priority: string; } }> {
   logger.info(`Starting code intelligence analysis phase: ${args.phase}`);
   
   try {
@@ -168,7 +165,7 @@ async function executionPhase(args: CodeIntelligenceArgs): Promise<ExecutionResu
   };
 }
 
-async function fullAnalysisPipeline(args: CodeIntelligenceArgs) {
+async function fullAnalysisPipeline(args: CodeIntelligenceArgs): Promise<{ inspection: InspectionResult; diagnosis: DiagnosisResult; execution: ExecutionResult; summary: { timestamp: string; file: string; priority: string; } }> {
   const inspection = await inspectionPhase(args);
   const diagnosis = await diagnosisPhase(args);
   const execution = await executionPhase(args);

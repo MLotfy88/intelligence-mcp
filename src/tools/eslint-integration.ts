@@ -1,15 +1,13 @@
 import { Config } from '../utils/config-loader.js';
 import { logger } from '../utils/logger.js';
-import type { ESLint } from 'eslint';
 import {
   ESLintArgs,
-  LintMessageFix,
-  LintMessage,
   LintResult,
   FormattedResult
 } from '../types/eslint-integration.d.js';
+import { ESLint } from 'eslint';
 
-export function getESLintToolDefinition(config: Config): { name: string; description: string; schema: any; handler: any } {
+export function getESLintToolDefinition(config: Config): { name: string; description: string; schema: object; handler: (args: ESLintArgs) => Promise<FormattedResult> } {
   return {
     name: 'eslint_analysis',
     description: 'Code quality analysis with auto-fix capabilities',

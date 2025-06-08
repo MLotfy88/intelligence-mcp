@@ -1,11 +1,9 @@
 import { Config } from '../utils/config-loader.js';
 import { logger } from '../utils/logger.js';
 
-interface DailyDigestArgs {
-  // No specific arguments for now, as it will read from memory files
-}
+type DailyDigestArgs = Record<string, never>;
 
-export function getDailyDigestToolDefinition(config: Config): { name: string; description: string; schema: any; handler: any } {
+export function getDailyDigestToolDefinition(_config: Config): { name: string; description: string; schema: any; handler: any } {
   return {
     name: 'daily_digest_generator',
     description: 'Generates a daily summary of completed tasks, key decisions, errors, and deadlines.',

@@ -2,7 +2,7 @@ import { Config } from '../utils/config-loader.js';
 import { logger } from '../utils/logger.js';
 import { WorkflowArgs } from '../types/master-workflow.d.js';
 
-export function getMasterWorkflowToolDefinition(config: Config): { name: string; description: string; schema: any; handler: any } {
+export function getMasterWorkflowToolDefinition(_config: Config): { name: string; description: string; schema: any; handler: any } {
   return {
     name: 'roo_code_workflow',
     description: 'Execute complete analysis workflow',
@@ -34,13 +34,13 @@ export function getMasterWorkflowToolDefinition(config: Config): { name: string;
       try {
         switch (args.workflow_type) {
           case 'full_analysis':
-            return await fullAnalysis(args, context.call, config);
+            return await fullAnalysis(args, context.call, _config);
           case 'quick_check':
-            return await quickCheck(args, context.call, config);
+            return await quickCheck(args, context.call, _config);
           case 'context_condensing':
-            return await contextCondensing(args, context.call, config);
+            return await contextCondensing(args, context.call, _config);
           case 'daily_digest':
-            return await dailyDigest(args, context.call, config);
+            return await dailyDigest(args, context.call, _config);
           default:
             throw new Error(`Invalid workflow type: ${args.workflow_type}`);
         }
@@ -118,7 +118,7 @@ async function fullAnalysis(args: WorkflowArgs, call: (toolName: string, toolArg
   };
 }
 
-async function quickCheck(args: WorkflowArgs, call: (toolName: string, toolArgs: any) => Promise<any>, config: Config) {
+async function quickCheck(args: WorkflowArgs, call: (toolName: string, toolArgs: any) => Promise<any>, _config: Config) {
   const [lintResults, tsResults] = await Promise.all([
     call('eslint_analysis', {
       file_path: args.target_files[0],
@@ -138,14 +138,14 @@ async function quickCheck(args: WorkflowArgs, call: (toolName: string, toolArgs:
   };
 }
 
-async function contextCondensing(args: WorkflowArgs, call: (toolName: string, toolArgs: any) => Promise<any>, config: Config) {
+async function contextCondensing(args: WorkflowArgs, call: (toolName: string, toolArgs: any) => Promise<any>, _config: Config) {
   return await call('context_condensing_process', {
     target_files: args.target_files,
-    compression_rate: config.priorities.default_compression_rate
+    compression_rate: _config.priorities.default_compression_rate
   });
 }
 
-async function dailyDigest(args: WorkflowArgs, call: (toolName: string, toolArgs: any) => Promise<any>, config: Config) {
+async function dailyDigest(args: WorkflowArgs, call: (toolName: string, toolArgs: any) => Promise<any>, _config: Config) {
   return await call('daily_digest_generator', {});
 }
 
@@ -154,7 +154,7 @@ function generateSearchQuery(diagnosisResults: any): string {
   return `typescript ${diagnosisResults.errors?.[0]?.message || 'error'}`;
 }
 
-async function storeResults(args: WorkflowArgs, results: any, call: (toolName: string, toolArgs: any) => Promise<any>, config: Config) {
+async function storeResults(args: WorkflowArgs, results: any, call: (toolName: string, toolArgs: any) => Promise<any>, _config: Config) {
   await call('memory_bank_manager', {
     action: 'write',
     file_category: 'technical',

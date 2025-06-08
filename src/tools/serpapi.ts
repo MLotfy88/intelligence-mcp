@@ -93,7 +93,7 @@ async function performSearch(args: WebSearchArgs, config: Config) {
   return formatResults(data, args.search_type);
 }
 
-async function cacheResults(query: string, results: any, cacheDuration: string = '1h') {
+async function cacheResults(query: string, results: any, cacheDuration = '1h') {
   const cacheFilePath = getCacheFilePath(query);
   await fs.mkdir(CACHE_DIR, { recursive: true });
   const dataToCache = {

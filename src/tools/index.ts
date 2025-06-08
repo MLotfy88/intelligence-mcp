@@ -10,7 +10,7 @@ import { getDailyDigestToolDefinition } from '../workflows/daily-digest.js';
 import { getContextCondensingToolDefinition } from '../workflows/context-condensing.js';
 import { logger } from '../utils/logger.js';
 
-export function getToolDefinitions(config: Config): any[] {
+export function getToolDefinitions(config: Config): Array<{ name: string; description: string; schema: object; handler: any }> {
   const tools = [
     getCodeIntelligenceToolDefinition(),
     getMemoryBankToolDefinition(config),

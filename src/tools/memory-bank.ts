@@ -5,11 +5,10 @@ import path from 'path';
 
 import {
   FileCategory,
-  MemoryAction,
   MemoryBankArgs
 } from '../types/memory-bank.d.js';
 
-export function getMemoryBankToolDefinition(config: Config): { name: string; description: string; schema: any; handler: any } {
+export function getMemoryBankToolDefinition(_config: Config): { name: string; description: string; schema: object; handler: (args: MemoryBankArgs) => Promise<any> } {
   return {
     name: 'memory_bank_manager',
     description: 'Manage structured memory files with auto-archiving',
@@ -36,15 +35,15 @@ export function getMemoryBankToolDefinition(config: Config): { name: string; des
       try {
         switch (args.action) {
           case 'read':
-            return await readMemoryFile(args, config);
+            return await readMemoryFile(args, _config);
           case 'write':
-            return await writeMemoryFile(args, config);
+            return await writeMemoryFile(args, _config);
           case 'update':
-            return await updateMemoryFile(args, config);
+            return await updateMemoryFile(args, _config);
           case 'archive':
-            return await archiveFiles(args, config);
+            return await archiveFiles(args, _config);
           case 'search':
-            return await searchMemoryFiles(args, config);
+            return await searchMemoryFiles(args, _config);
           default:
             throw new Error(`Invalid action: ${args.action}`);
         }
@@ -56,30 +55,30 @@ export function getMemoryBankToolDefinition(config: Config): { name: string; des
   };
 }
 
-async function readMemoryFile(args: MemoryBankArgs, config: Config) {
-  const filePath = getFilePath(args.file_category, args.file_name, config);
+async function readMemoryFile(args: MemoryBankArgs, _config: Config): Promise<{ content: string }> {
+  const filePath = getFilePath(args.file_category, args.file_name, _config);
   const content = await fs.readFile(filePath, 'utf-8');
   return { content };
 }
 
-async function writeMemoryFile(args: MemoryBankArgs, config: Config) {
+async function writeMemoryFile(args: MemoryBankArgs, _config: Config): Promise<{ success: boolean; path: string }> {
   if (!args.content) {
     throw new Error('Content is required for write operation');
   }
   
-  const filePath = getFilePath(args.file_category, args.file_name, config);
+  const filePath = getFilePath(args.file_category, args.file_name, _config);
   await fs.mkdir(path.dirname(filePath), { recursive: true });
   await fs.writeFile(filePath, args.content);
   
   return { success: true, path: filePath };
 }
 
-async function updateMemoryFile(args: MemoryBankArgs, config: Config) {
+async function updateMemoryFile(args: MemoryBankArgs, _config: Config): Promise<{ success: boolean; timestamp: string }> {
   if (!args.content) {
     throw new Error('Content is required for update operation');
   }
   
-  const filePath = getFilePath(args.file_category, args.file_name, config);
+  const filePath = getFilePath(args.file_category, args.file_name, _config);
   const timestamp = new Date().toLocaleString(); // Use toLocaleString for a more readable date/time
   const content = `${args.content}\n\nLast updated: ${timestamp}`;
   
@@ -87,10 +86,10 @@ async function updateMemoryFile(args: MemoryBankArgs, config: Config) {
   return { success: true, timestamp };
 }
 
-async function archiveFiles(args: MemoryBankArgs, config: Config) {
+async function archiveFiles(args: MemoryBankArgs, _config: Config): Promise<{ archived: Array<{ file: string; archived: string | null; status: string; error?: string }> }> {
   const baseMemoryPath = path.join('intelligence', 'memory');
   const sourceCategoryPath = path.join(baseMemoryPath, args.file_category);
-  const archiveCategoryPath = path.join(baseMemoryPath, config.memory.archive.path, args.file_category);
+  const archiveCategoryPath = path.join(baseMemoryPath, _config.memory.archive.path, args.file_category);
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
 
   await fs.mkdir(archiveCategoryPath, { recursive: true });
@@ -114,13 +113,13 @@ async function archiveFiles(args: MemoryBankArgs, config: Config) {
   return { archived: results };
 }
 
-async function searchMemoryFiles(args: MemoryBankArgs, config: Config) {
+async function searchMemoryFiles(args: MemoryBankArgs, _config: Config): Promise<{ results: Array<{ file: string; category: FileCategory; content_preview: string }> }> {
   if (!args.search_query) {
     throw new Error('Search query is required for search operation');
   }
 
   const results: { file: string; category: FileCategory; content_preview: string }[] = [];
-  const targetDirectory = getFilePath(args.file_category, '', config);
+  const targetDirectory = getFilePath(args.file_category, '', _config);
 
   try {
     const filesInDirectory = await fs.readdir(targetDirectory);
@@ -154,6 +153,6 @@ async function searchMemoryFiles(args: MemoryBankArgs, config: Config) {
   return { results };
 }
 
-function getFilePath(category: FileCategory, fileName: string, config: Config): string {
+function getFilePath(category: FileCategory, fileName: string, _config: Config): string {
   return path.join('intelligence', 'memory', category, fileName);
 }

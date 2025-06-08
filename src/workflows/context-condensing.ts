@@ -59,7 +59,7 @@ export function getContextCondensingToolDefinition(config: Config): { name: stri
 
         for (const filePath of args.target_files) {
           let fileContent: string;
-          let fileCategory: string = 'dynamic'; // Default category for reading
+          let fileCategory = 'dynamic'; // Default category for reading
 
           // Determine file category for reading
           if (filePath.includes('project-brief.md') || filePath.includes('tech-context.md') || filePath.includes('system-patterns.md')) {

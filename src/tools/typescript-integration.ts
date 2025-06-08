@@ -3,7 +3,6 @@ import { logger } from '../utils/logger.js';
 import * as ts from 'typescript';
 import {
   TypeScriptArgs,
-  TypeScriptDiagnostic,
   DiagnosticResult
 } from '../types/typescript-integration.d.js';
 
