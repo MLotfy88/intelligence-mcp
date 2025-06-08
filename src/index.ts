@@ -39,7 +39,7 @@ async function main() {
 
     // Configure CORS for specific origins and methods
     app.use(cors({
-      origin: 'http://localhost:3000', // Replace with your frontend origin
+      origin: '*', // Allow all origins for testing. IMPORTANT: Restrict this in production!
       methods: ['GET', 'POST', 'PUT', 'DELETE'],
       allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
     }));
