@@ -5,10 +5,16 @@ import { registerTools } from './tools/index.js';
 import { handleError } from './utils/error-handler.js';
 import { logger } from './utils/logger.js';
 
+// Ensure the types/mcp-sdk.js path is correct based on your project structure
+// If '@modelcontextprotocol/sdk' is the actual import, use that instead
+// import { Server, StdioServerTransport } from '@modelcontextprotocol/sdk';
+
 async function main() {
   try {
-    // Initialize Express app
+    // Initialize Express app for HTTP layer
     const app = express();
+
+    // Initialize MCP Server with StdioServerTransport
     const server = new Server({
       name: "roo-code-intelligence",
       version: "2.1.0",
@@ -25,9 +31,13 @@ async function main() {
     await server.start();
     logger.info('MCP Server started successfully');
 
-    // Expose a simple HTTP endpoint
-    const port = process.env.PORT || 10000;
-    app.get('/health', (req, res) => res.send('Server is running'));
+    // Expose a simple HTTP endpoint for health check
+    const port = process.env.PORT || 10000; // Use Render's PORT or fallback to 10000
+    app.get('/health', (req, res) => {
+      res.status(200).send('Server is running');
+    });
+
+    // Start the HTTP server
     app.listen(port, '0.0.0.0', () => {
       logger.info(`HTTP Server started on port ${port}`);
     });
