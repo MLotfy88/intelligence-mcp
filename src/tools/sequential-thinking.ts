@@ -7,7 +7,7 @@ interface SequentialThinkingArgs {
   include_alternatives?: boolean;
 }
 
-export function getSequentialThinkingToolDefinition(config: Config): { name: string; description: string; schema: any; handler: any } {
+export function getSequentialThinkingToolDefinition(config: Config): { name: string; description: string; schema: object; handler: (args: SequentialThinkingArgs) => Promise<{ status: string; message: string; problem_statement: string; thinking_depth: number; include_alternatives: boolean; steps: string[]; decisions: string[]; alternatives: string[]; }> } {
   return {
     name: "sequential_thinking_process",
     description: "Step-by-step problem solving with decision trees",

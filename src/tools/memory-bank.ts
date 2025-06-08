@@ -8,7 +8,7 @@ import {
   MemoryBankArgs
 } from '../types/memory-bank.d.js';
 
-export function getMemoryBankToolDefinition(_config: Config): { name: string; description: string; schema: object; handler: (args: MemoryBankArgs) => Promise<any> } {
+export function getMemoryBankToolDefinition(_config: Config): { name: string; description: string; schema: object; handler: (args: MemoryBankArgs) => Promise<{ content: string } | { success: boolean; path: string } | { success: boolean; timestamp: string } | { archived: Array<{ file: string; archived: string | null; status: string; error?: string }> } | { results: Array<{ file: string; category: FileCategory; content_preview: string }> }> } {
   return {
     name: 'memory_bank_manager',
     description: 'Manage structured memory files with auto-archiving',

@@ -5,7 +5,6 @@ import {
   LintResult,
   FormattedResult
 } from '../types/eslint-integration.d.js';
-import { ESLint } from 'eslint';
 
 export function getESLintToolDefinition(config: Config): { name: string; description: string; schema: object; handler: (args: ESLintArgs) => Promise<FormattedResult> } {
   return {

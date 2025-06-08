@@ -4,7 +4,7 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import { WebSearchArgs } from '../types/serpapi.d.js';
 
-export function getWebSearchToolDefinition(config: Config): { name: string; description: string; schema: any; handler: any } {
+export function getWebSearchToolDefinition(config: Config): { name: string; description: string; schema: object; handler: (args: WebSearchArgs) => Promise<any> } {
   return {
     name: 'web_search_enhanced',
     description: 'Enhanced web search with result caching and context integration',

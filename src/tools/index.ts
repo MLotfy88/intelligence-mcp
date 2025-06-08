@@ -10,7 +10,7 @@ import { getDailyDigestToolDefinition } from '../workflows/daily-digest.js';
 import { getContextCondensingToolDefinition } from '../workflows/context-condensing.js';
 import { logger } from '../utils/logger.js';
 
-export function getToolDefinitions(config: Config): Array<{ name: string; description: string; schema: object; handler: any }> {
+export function getToolDefinitions(config: Config): Array<{ name: string; description: string; schema: object; handler: any }> { // TODO: Define a more specific union type for handlers
   const tools = [
     getCodeIntelligenceToolDefinition(),
     getMemoryBankToolDefinition(config),
