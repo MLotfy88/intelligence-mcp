@@ -58,6 +58,11 @@ async function main() {
       await transport.handleRequest(req, res, req.body);
     });
 
+    // Handle /api/tool endpoint as well, routing to the same transport
+    app.all('/api/tool', async (req, res) => {
+      await transport.handleRequest(req, res, req.body);
+    });
+
     // Add a basic health check endpoint
     app.get('/health', (req, res) => {
       res.status(200).send('OK');
