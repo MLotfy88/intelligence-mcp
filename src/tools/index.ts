@@ -11,7 +11,7 @@ import { getContextCondensingToolDefinition } from '../workflows/context-condens
 import { getConversationSummarizerToolDefinition } from './conversation-summarizer.js';
 import { logger } from '../utils/logger.js';
 
-export function getToolDefinitions(config: Config): Array<{ name: string; description: string; schema: object; handler: any }> { // The 'handler' type is 'any' because MCP tool handlers can have diverse and dynamic argument/return types, making a strict union type overly complex and difficult to maintain.
+export function getToolDefinitions(config: Config): Array<{ name: string; description: string; schema: object; handler: unknown }> {
   const tools = [
     getCodeIntelligenceToolDefinition(),
     getMemoryBankToolDefinition(config),

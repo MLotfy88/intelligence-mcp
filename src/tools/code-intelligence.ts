@@ -47,18 +47,23 @@ async function executeCodeIntelligence(args: CodeIntelligenceArgs): Promise<Anal
   
   try {
     switch (args.phase) {
-      case 'inspection':
+      case 'inspection': {
         return await inspectionPhase(args);
-      case 'diagnosis':
+      }
+      case 'diagnosis': {
         return await diagnosisPhase(args);
-      case 'execution':
+      }
+      case 'execution': {
         // If execution phase is requested directly, run diagnosis first
         const diagnosisResultForExecution = await diagnosisPhase(args);
         return await executionPhase(args, diagnosisResultForExecution);
-      case 'all':
+      }
+      case 'all': {
         return await fullAnalysisPipeline(args);
-      default:
+      }
+      default: {
         throw new Error(`Invalid phase: ${args.phase}`);
+      }
     }
   } catch (error) {
     logger.error(`Code intelligence analysis failed in ${args.phase} phase`, error);
@@ -84,14 +89,14 @@ async function inspectionPhase(args: CodeIntelligenceArgs): Promise<InspectionRe
     );
 
     // Enhanced dependency detection using AST
-    function visit(node: ts.Node) {
+    const visit = (node: ts.Node): void => {
       if (ts.isImportDeclaration(node) && ts.isStringLiteral(node.moduleSpecifier)) {
         dependencies.push(node.moduleSpecifier.text);
       } else if (ts.isCallExpression(node) && ts.isIdentifier(node.expression) && node.expression.text === 'require' && node.arguments.length > 0 && ts.isStringLiteral(node.arguments[0])) {
         dependencies.push(node.arguments[0].text);
       }
       ts.forEachChild(node, visit);
-    }
+    };
     if (ast) {
       ts.forEachChild(ast, visit);
     }

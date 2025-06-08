@@ -6,7 +6,7 @@ interface ContextCondensingArgs {
   compression_rate?: number; // e.g., 0.5 for 50% compression
 }
 
-export function getContextCondensingToolDefinition(config: Config): { name: string; description: string; schema: object; handler: (args: ContextCondensingArgs, context: { call: (toolName: string, toolArgs: Record<string, any>) => Promise<any> }) => Promise<{ status: string; message: string; results: { file: string; original_size: number; condensed_size: number; condensed_content: string; priority: string }[] }> } { // The 'any' type is used for 'toolArgs' and the Promise return type because MCP tool calls can have diverse and dynamic argument/return types, making a strict union type overly complex and difficult to maintain.
+export function getContextCondensingToolDefinition(config: Config): { name: string; description: string; schema: object; handler: (args: ContextCondensingArgs, context: { call: (toolName: string, toolArgs: Record<string, unknown>) => Promise<unknown> }) => Promise<{ status: string; message: string; results: { file: string; original_size: number; condensed_size: number; condensed_content: string; priority: string }[] }> } {
   return {
     name: 'context_condensing_process',
     description: 'Condenses context from specified files based on a compression rate.',
@@ -26,7 +26,7 @@ export function getContextCondensingToolDefinition(config: Config): { name: stri
       },
       required: ['target_files']
     },
-    handler: async (args: ContextCondensingArgs, context: { call: (toolName: string, toolArgs: Record<string, any>) => Promise<any> }): Promise<{ status: string; message: string; results: { file: string; original_size: number; condensed_size: number; condensed_content: string; priority: string }[] }> => { // The 'any' type is used for 'toolArgs' and the Promise return type because MCP tool calls can have diverse and dynamic argument/return types, making a strict union type overly complex and difficult to maintain.
+    handler: async (args: ContextCondensingArgs, context: { call: (toolName: string, toolArgs: Record<string, unknown>) => Promise<unknown> }): Promise<{ status: string; message: string; results: { file: string; original_size: number; condensed_size: number; condensed_content: string; priority: string }[] }> => {
       logger.info(`Starting context condensing for files: ${args.target_files.join(', ')}`);
 
       try {
@@ -42,7 +42,7 @@ export function getContextCondensingToolDefinition(config: Config): { name: stri
               file_category: 'dynamic', // Assuming dynamic for general context files
               file_name: filePath
             });
-            return `--- FILE: ${filePath} ---\n${readResult.content}\n`;
+            return `--- FILE: ${filePath} ---\n${(readResult as { content: string }).content}\n`;
           } catch (error) {
             logger.warn(`Could not read file ${filePath} for backup: ${(error as Error).message}`);
             return `--- FILE: ${filePath} (Read Failed) ---\n`;
@@ -78,7 +78,7 @@ export function getContextCondensingToolDefinition(config: Config): { name: stri
               file_category: fileCategory,
               file_name: filePath.split('/').pop() // Get just the file name
             });
-            fileContent = readResult.content;
+            fileContent = (readResult as { content: string }).content;
           } catch (readError) {
             logger.warn(`Could not read file ${filePath} using memory_bank_manager. Simulating content: ${(readError as Error).message}`);
             fileContent = `Simulated content for ${filePath}. This content would be condensed. Error: ${(readError as Error).message}`;

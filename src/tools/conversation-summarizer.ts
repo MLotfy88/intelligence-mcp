@@ -10,7 +10,7 @@ interface ConversationSummarizerArgs {
   override_compression_rate?: number;
 }
 
-export function getConversationSummarizerToolDefinition() {
+export function getConversationSummarizerToolDefinition(): { name: string; description: string; schema: object; handler: (args: ConversationSummarizerArgs) => Promise<{ summary: string }> } {
   return {
     name: 'conversation_summarizer',
     description: 'Summarizes conversation history and can optionally save it to a file, adhering to priority levels and compression rates.',
@@ -37,7 +37,7 @@ export function getConversationSummarizerToolDefinition() {
       },
       required: ['conversation_history', 'summary_type']
     },
-    handler: async (args: ConversationSummarizerArgs) => {
+    handler: async (args: ConversationSummarizerArgs): Promise<{ summary: string }> => {
       logger.info(`Starting conversation summarization with type: ${args.summary_type}`);
       const config: Config = await loadConfig();
       const memoryBankTool = getMemoryBankToolDefinition(config);
