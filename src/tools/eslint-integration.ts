@@ -36,8 +36,8 @@ export function getESLintToolDefinition(config: Config): { name: string; descrip
         const eslint = new ESLint({
           fix: args.auto_fix && config.integrations.eslint.auto_fix,
           overrideConfig: {
-            rules: args.rules_override as Linter.RulesRecord
-          }
+            rules: args.rules_override
+          } as Linter.Config
         });
 
         const results = await eslint.lintFiles([args.file_path]);

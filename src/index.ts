@@ -58,6 +58,11 @@ async function main() {
       await transport.handleRequest(req, res, req.body);
     });
 
+    // Add a basic health check endpoint
+    app.get('/health', (req, res) => {
+      res.status(200).send('OK');
+    });
+
     const port = process.env.PORT ? parseInt(process.env.PORT) : 3000;
     app.listen(port, () => {
       logger.info(`MCP Server started successfully on port ${port}`);
