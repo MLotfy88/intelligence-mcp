@@ -1,13 +1,9 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import { Server, StdioServerTransport } from './types/mcp-sdk.js';
 import { loadConfig } from './utils/config-loader.js';
 import { registerTools } from './tools/index.js';
 import { handleError } from './utils/error-handler.js';
 import { logger } from './utils/logger.js';
-
-// Ensure the types/mcp-sdk.js path is correct based on your project structure
-// If '@modelcontextprotocol/sdk' is the actual import, use that instead
-// import { Server, StdioServerTransport } from '@modelcontextprotocol/sdk';
 
 async function main() {
   try {
@@ -33,7 +29,7 @@ async function main() {
 
     // Expose a simple HTTP endpoint for health check
     const port = process.env.PORT || 10000; // Use Render's PORT or fallback to 10000
-    app.get('/health', (req, res) => {
+    app.get('/health', (req: Request, res: Response) => {
       res.status(200).send('Server is running');
     });
 
