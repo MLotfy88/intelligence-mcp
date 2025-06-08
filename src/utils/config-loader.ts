@@ -44,7 +44,17 @@ export async function loadConfig(): Promise<Config> {
   try {
     const configPath = '.roo/code-intelligence.yaml';
     const configContent = await readFile(configPath, 'utf-8');
-    return parse(configContent) as Config;
+    const config = parse(configContent) as Config;
+
+    // Override serpapi.api_key with environment variable if available
+    if (process.env.SERP_API_KEY) {
+      config.integrations.serpapi.api_key = process.env.SERP_API_KEY;
+      logger.info('SERP_API_KEY loaded from environment variables');
+    } else {
+      logger.warn('SERP_API_KEY not found in environment, using config file value');
+    }
+
+    return config;
   } catch (error) {
     logger.error('Failed to load configuration', error);
     throw new Error('Configuration loading failed');
