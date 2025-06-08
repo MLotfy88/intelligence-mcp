@@ -1,55 +1,13 @@
-import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { Config } from '../utils/config-loader.js';
 import { logger } from '../utils/logger.js';
 import type { ESLint } from 'eslint';
-
-interface ESLintArgs {
-  file_path: string;
-  auto_fix: boolean;
-  rules_override?: Record<string, any>;
-}
-
-interface LintMessageFix {
-  text: string;
-  range: [number, number];
-}
-
-interface LintMessage {
-  ruleId: string | null;
-  severity: number;
-  message: string;
-  line: number;
-  column: number;
-  fix?: LintMessageFix;
-}
-
-interface LintResult {
-  filePath: string;
-  errorCount: number;
-  warningCount: number;
-  messages: LintMessage[];
-}
-
-interface FormattedResult {
-  results: Array<{
-    filePath: string;
-    errorCount: number;
-    warningCount: number;
-    messages: Array<{
-      ruleId: string | null;
-      severity: number;
-      message: string;
-      line: number;
-      column: number;
-      fixable: boolean;
-    }>;
-  }>;
-  summary: {
-    totalErrors: number;
-    totalWarnings: number;
-    filesAnalyzed: number;
-  };
-}
+import {
+  ESLintArgs,
+  LintMessageFix,
+  LintMessage,
+  LintResult,
+  FormattedResult
+} from '../types/eslint-integration.d.js';
 
 export function getESLintToolDefinition(config: Config): { name: string; description: string; schema: any; handler: any } {
   return {
@@ -90,29 +48,40 @@ export function getESLintToolDefinition(config: Config): { name: string; descrip
           await ESLint.outputFixes(results);
         }
         
-        return formatResults(results);
+        return formatResults(results, config.integrations.eslint.severity_threshold);
       } catch (error) {
-        logger.error('ESLint analysis failed', error);
+        logger.error('ESLint analysis failed', (error as Error).message);
         throw error;
       }
     }
   };
 }
 
-function formatResults(results: LintResult[]): FormattedResult {
-  const formatted = results.map(result => ({
-    filePath: result.filePath,
-    errorCount: result.errorCount,
-    warningCount: result.warningCount,
-    messages: result.messages.map(msg => ({
-      ruleId: msg.ruleId,
-      severity: msg.severity,
-      message: msg.message,
-      line: msg.line,
-      column: msg.column,
-      fixable: msg.fix !== undefined
-    }))
-  }));
+function formatResults(results: LintResult[], severityThreshold: string): FormattedResult {
+  const severityMap: { [key: string]: number } = {
+    'off': 0,
+    'warn': 1,
+    'warning': 1,
+    'error': 2
+  };
+  const threshold = severityMap[severityThreshold.toLowerCase()] || 0;
+
+  const formatted = results.map(result => {
+    const filteredMessages = result.messages.filter(msg => msg.severity >= threshold);
+    return {
+      filePath: result.filePath,
+      errorCount: filteredMessages.filter(msg => msg.severity === 2).length,
+      warningCount: filteredMessages.filter(msg => msg.severity === 1).length,
+      messages: filteredMessages.map(msg => ({
+        ruleId: msg.ruleId,
+        severity: msg.severity,
+        message: msg.message,
+        line: msg.line,
+        column: msg.column,
+        fixable: msg.fix !== undefined
+      }))
+    };
+  });
 
   return {
     results: formatted,

@@ -1,13 +1,6 @@
-import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { Config } from '../utils/config-loader.js';
 import { logger } from '../utils/logger.js';
-
-interface WorkflowArgs {
-  workflow_type: 'full_analysis' | 'quick_check' | 'context_condensing' | 'daily_digest';
-  target_files: string[];
-  priority_override?: 'P0' | 'P1' | 'P2';
-  include_web_search?: boolean;
-}
+import { WorkflowArgs } from '../types/master-workflow.d.js';
 
 export function getMasterWorkflowToolDefinition(config: Config): { name: string; description: string; schema: any; handler: any } {
   return {

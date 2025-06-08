@@ -1,37 +1,11 @@
-import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { Config } from '../utils/config-loader.js';
 import { logger } from '../utils/logger.js';
 import * as ts from 'typescript';
-
-interface TypeScriptArgs {
-  file_path: string;
-  check_type: 'syntax' | 'semantic' | 'all';
-  include_suggestions: boolean;
-}
-
-interface TypeScriptDiagnostic {
-  message: string;
-  category: string;
-  code: number;
-  position: {
-    line: number;
-    column: number;
-  };
-  file?: string;
-}
-
-interface DiagnosticResult {
-  diagnostics: {
-    errors: TypeScriptDiagnostic[];
-    warnings: TypeScriptDiagnostic[];
-    suggestions: TypeScriptDiagnostic[];
-  };
-  summary: {
-    errorCount: number;
-    warningCount: number;
-    suggestionCount: number;
-  };
-}
+import {
+  TypeScriptArgs,
+  TypeScriptDiagnostic,
+  DiagnosticResult
+} from '../types/typescript-integration.d.js';
 
 export function getTypeScriptToolDefinition(config: Config): { name: string; description: string; schema: any; handler: any } {
   return {
@@ -58,10 +32,10 @@ export function getTypeScriptToolDefinition(config: Config): { name: string; des
       try {
         const program = createProgram(args.file_path, config);
         const diagnostics = getDiagnostics(program, args);
-        
-        return formatDiagnostics(diagnostics, args.include_suggestions);
+
+        return formatDiagnostics(diagnostics, args.include_suggestions, config.integrations.typescript.diagnostic_level);
       } catch (error) {
-        logger.error('TypeScript diagnostics failed', error);
+        logger.error('TypeScript diagnostics failed', (error as Error).message);
         throw error;
       }
     }
@@ -69,14 +43,17 @@ export function getTypeScriptToolDefinition(config: Config): { name: string; des
 }
 
 function createProgram(filePath: string, config: Config): ts.Program {
-  const { options } = ts.convertCompilerOptionsFromJson(
-    {
-      target: ts.ScriptTarget.Latest,
-      module: ts.ModuleKind.ESNext,
-      strict: true
-    },
+  const tsConfigPath = config.integrations.typescript.tsconfig_path;
+  const configFile = ts.readConfigFile(tsConfigPath, ts.sys.readFile);
+  const { options, errors } = ts.parseJsonConfigFileContent(
+    configFile.config,
+    ts.sys,
     process.cwd()
   );
+
+  if (errors.length > 0) {
+    logger.error('Failed to parse tsconfig.json', errors);
+  }
 
   return ts.createProgram([filePath], options);
 }
@@ -104,34 +81,44 @@ function getDiagnostics(program: ts.Program, args: TypeScriptArgs): readonly ts.
   }
 }
 
-function formatDiagnostics(diagnostics: readonly ts.Diagnostic[], includeSuggestions: boolean): DiagnosticResult {
-  const formatted = diagnostics.map(diagnostic => {
-    const message = ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n');
-    const category = ts.DiagnosticCategory[diagnostic.category].toLowerCase();
-    
-    let line = 0, character = 0;
-    if (diagnostic.file && diagnostic.start !== undefined) {
-      const pos = diagnostic.file.getLineAndCharacterOfPosition(diagnostic.start);
-      line = pos.line;
-      character = pos.character;
-    }
+function formatDiagnostics(diagnostics: readonly ts.Diagnostic[], includeSuggestions: boolean, diagnosticLevel: string): DiagnosticResult {
+  const diagnosticLevelMap: { [key: string]: ts.DiagnosticCategory } = {
+    'error': ts.DiagnosticCategory.Error,
+    'warning': ts.DiagnosticCategory.Warning,
+    'suggestion': ts.DiagnosticCategory.Suggestion,
+    'message': ts.DiagnosticCategory.Message
+  };
+  const minSeverity = diagnosticLevelMap[diagnosticLevel.toLowerCase()] || ts.DiagnosticCategory.Message;
 
-    return {
-      message,
-      category,
-      code: diagnostic.code,
-      position: {
-        line: line + 1,
-        column: character + 1
-      },
-      file: diagnostic.file?.fileName
-    };
-  });
+  const formatted = diagnostics
+    .filter(d => d.category >= minSeverity)
+    .map(diagnostic => {
+      const message = ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n');
+      const category = ts.DiagnosticCategory[diagnostic.category].toLowerCase();
+
+      let line = 0, character = 0;
+      if (diagnostic.file && diagnostic.start !== undefined) {
+        const pos = diagnostic.file.getLineAndCharacterOfPosition(diagnostic.start);
+        line = pos.line;
+        character = pos.character;
+      }
+
+      return {
+        message,
+        category,
+        code: diagnostic.code,
+        position: {
+          line: line + 1,
+          column: character + 1
+        },
+        file: diagnostic.file?.fileName
+      };
+    });
 
   const errors = formatted.filter(d => d.category === 'error');
   const warnings = formatted.filter(d => d.category === 'warning');
-  const suggestions = includeSuggestions ? 
-    formatted.filter(d => d.category === 'suggestion') : 
+  const suggestions = includeSuggestions ?
+    formatted.filter(d => d.category === 'suggestion') :
     [];
 
   return {

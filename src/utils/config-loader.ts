@@ -33,10 +33,12 @@ export interface Config {
     eslint: {
       config_path: string;
       auto_fix: boolean;
+      severity_threshold: string;
     };
     typescript: {
       tsconfig_path: string;
       check_on_save: boolean;
+      diagnostic_level: string;
     };
     sequential_thinking: {
       enabled: boolean;

@@ -1,12 +1,8 @@
-import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { Config } from '../utils/config-loader.js';
 import { logger } from '../utils/logger.js';
-
-interface WebSearchArgs {
-  query: string;
-  search_type: 'general' | 'code' | 'documentation' | 'error_solution';
-  max_results: number;
-}
+import * as fs from 'fs/promises';
+import * as path from 'path';
+import { WebSearchArgs } from '../types/serpapi.d.js';
 
 export function getWebSearchToolDefinition(config: Config): { name: string; description: string; schema: any; handler: any } {
   return {
@@ -42,7 +38,7 @@ export function getWebSearchToolDefinition(config: Config): { name: string; desc
         const results = await performSearch(args, config);
         
         // Cache results
-        await cacheResults(args.query, results);
+        await cacheResults(args.query, results, config.integrations.serpapi.cache_duration);
         
         return results;
       } catch (error) {
@@ -53,9 +49,27 @@ export function getWebSearchToolDefinition(config: Config): { name: string; desc
   };
 }
 
-async function checkCache(query: string): Promise<any> {
-  // TODO: Implement caching
-  return null;
+const CACHE_DIR = 'intelligence/cache/serpapi';
+
+async function checkCache(query: string): Promise<any | null> {
+  const cacheFilePath = getCacheFilePath(query);
+  try {
+    const cacheContent = await fs.readFile(cacheFilePath, 'utf-8');
+    const cachedData = JSON.parse(cacheContent);
+    const cacheDurationMs = parseDuration(cachedData.cache_duration);
+
+    if (Date.now() - cachedData.timestamp < cacheDurationMs) {
+      logger.info(`Cache hit for query: ${query}`);
+      return cachedData.results;
+    } else {
+      logger.info(`Cache expired for query: ${query}`);
+      await fs.unlink(cacheFilePath); // Invalidate expired cache
+      return null;
+    }
+  } catch (error) {
+    // Cache file not found or invalid, proceed with search
+    return null;
+  }
 }
 
 async function performSearch(args: WebSearchArgs, config: Config) {
@@ -79,8 +93,34 @@ async function performSearch(args: WebSearchArgs, config: Config) {
   return formatResults(data, args.search_type);
 }
 
-async function cacheResults(query: string, results: any) {
-  // TODO: Implement caching with 1-hour expiration
+async function cacheResults(query: string, results: any, cacheDuration: string = '1h') {
+  const cacheFilePath = getCacheFilePath(query);
+  await fs.mkdir(CACHE_DIR, { recursive: true });
+  const dataToCache = {
+    query,
+    timestamp: Date.now(),
+    cache_duration: cacheDuration,
+    results
+  };
+  await fs.writeFile(cacheFilePath, JSON.stringify(dataToCache, null, 2));
+  logger.info(`Results cached for query: ${query}`);
+}
+
+function getCacheFilePath(query: string): string {
+  const fileName = Buffer.from(query).toString('base64url') + '.json';
+  return path.join(CACHE_DIR, fileName);
+}
+
+function parseDuration(duration: string): number {
+  const value = parseInt(duration.slice(0, -1));
+  const unit = duration.slice(-1);
+  switch (unit) {
+    case 's': return value * 1000;
+    case 'm': return value * 1000 * 60;
+    case 'h': return value * 1000 * 60 * 60;
+    case 'd': return value * 1000 * 60 * 60 * 24;
+    default: return 0;
+  }
 }
 
 function formatResults(data: any, searchType: string) {

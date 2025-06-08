@@ -117,61 +117,145 @@ Here's an example of how to configure your server in a `claude_desktop_config.js
   }
 }
 ```
+**Note**: If the MCP client connects via `StdioServerTransport` (standard input/output), a `serverUrl` might not be explicitly needed in the client configuration, as the client directly spawns and communicates with the server process. However, for HTTP/HTTPS connections, `serverUrl` is essential.
 
-## 🔧 Available Tools
+## 🔧 Available Tools and Detailed Usage
 
-The Roo Code Intelligence server provides the following tools:
+The Roo Code Intelligence server provides a suite of powerful tools designed to enhance your AI's capabilities in code analysis and project management. Each tool is accessible via the MCP client.
 
--   `roo_code_workflow`: To execute the full analysis workflow (Inspection, Diagnosis, Execution).
--   `code_intelligence_analyze`: The three-phase code analysis engine.
--   `web_search_enhanced`: SerpAPI integration for web search with caching.
--   `memory_bank_manager`: Structured memory file management system with automatic archiving.
--   `eslint_analysis`: Code quality analysis tool using ESLint with auto-fix capabilities.
--   `typescript_diagnostics`: TypeScript type checking and diagnostics tool.
--   `daily_digest_generator`: Generates a daily summary of completed tasks, key decisions, errors, and deadlines.
--   `context_condensing`: Condenses context based on priority and compression rate.
-
-## 💡 Usage Examples (via MCP Client)
-
-Once your MCP client is configured, you can call the server's tools. Here are some code examples (using the MCP SDK):
-
+### 1. `code_intelligence_analyze`
+**Description**: The core three-phase code analysis engine: Inspection → Diagnosis → Execution.
+**Features**:
+-   **Inspection Phase**: Analyzes file structure, extracts metrics (e.g., complexity, dependencies), and builds an Abstract Syntax Tree (AST).
+-   **Diagnosis Phase**: Identifies potential issues (errors, warnings, suggestions) based on code patterns, type inconsistencies, and logic flaws.
+-   **Execution Phase**: Proposes solutions, refactoring suggestions, or bug fixes based on the diagnosis.
+**Usage Example**:
 ```typescript
-import { MCPClient } from "@modelcontextprotocol/sdk";
-
-// Create an MCP client to connect to the local server
-// If the server is running locally via StdioServerTransport, you might not need serverUrl
-// But if you are using a hosted server via HTTP/HTTPS, you will need to specify serverUrl
-const client = new MCPClient({
-    serverName: "roo-code-intelligence" // This must match the server name in the client configuration
+await client.call("code_intelligence_analyze", {
+  phase: "all", // Can be "inspection", "diagnosis", "execution", or "all"
+  file_path: "src/services/auth.ts",
+  context_files: ["src/types/user.d.ts", "src/config.ts"], // Optional: provide additional context files
+  priority_level: "P0" // Optional: "P0", "P1", "P2"
 });
+```
 
-// Example 1: Full code analysis for a file
-await client.call("roo_code_workflow", {
-  workflow_type: "full_analysis",
-  target_files: ["src/auth.ts", "src/types.ts"],
-  include_web_search: true
-});
-
-// Example 2: Quick ESLint check
-await client.call("eslint_analysis", {
-  file_path: "src/components/Header.tsx",
-  auto_fix: true
-});
-
-// Example 3: Context Condensing
-await client.call("context_condensing", {
-  target_files: ["src/utils/large-log.ts"],
-  compression_rate: 0.5
-});
-
-// Example 4: Generate Daily Digest
-await client.call("daily_digest_generator", {});
-
-// Example 5: Web search for solutions
+### 2. `web_search_enhanced`
+**Description**: Enhanced web search with result caching and context integration, powered by SerpAPI.
+**Features**:
+-   **Targeted Search**: Supports general, code, documentation, and error solution search types.
+-   **Caching**: Caches search results to reduce API calls and improve response times.
+**Usage Example**:
+```typescript
 await client.call("web_search_enhanced", {
   query: "TypeScript interface extends generic constraint",
-  search_type: "documentation",
-  max_results: 5
+  search_type: "documentation", // Can be "general", "code", "documentation", "error_solution"
+  max_results: 5 // Optional: number of results to fetch
+});
+```
+
+### 3. `memory_bank_manager`
+**Description**: Structured memory file management system with automatic archiving.
+**Features**:
+-   **Read/Write/Update**: Perform CRUD operations on memory files categorized into `core`, `dynamic`, `planning`, `technical`, and `auto_generated`.
+-   **Archiving**: Automatically archives old memory entries based on retention policies.
+-   **Search**: Search for content within memory files.
+**Usage Examples**:
+-   **Write to a memory file**:
+    ```typescript
+    await client.call("memory_bank_manager", {
+      action: "write",
+      file_category: "dynamic", // e.g., "core", "dynamic", "planning", "technical", "auto_generated"
+      file_name: "active-context.md",
+      content: "New task: Implement user authentication module. [STATUS: In-Progress]"
+    });
+    ```
+-   **Read from a memory file**:
+    ```typescript
+    await client.call("memory_bank_manager", {
+      action: "read",
+      file_category: "core",
+      file_name: "project-brief.md"
+    });
+    ```
+-   **Search memory files**:
+    ```typescript
+    await client.call("memory_bank_manager", {
+      action: "search",
+      file_category: "technical",
+      search_query: "API endpoint"
+    });
+    ```
+-   **Archive files in a category**:
+    ```typescript
+    await client.call("memory_bank_manager", {
+      action: "archive",
+      file_category: "auto_generated"
+    });
+    ```
+
+### 4. `eslint_analysis`
+**Description**: Code quality analysis tool using ESLint with auto-fix capabilities.
+**Features**:
+-   **Linting**: Analyzes JavaScript/TypeScript files for code quality issues.
+-   **Auto-Fix**: Automatically fixes fixable issues based on ESLint rules.
+-   **Configurable Severity**: Filter results by severity threshold.
+**Usage Example**:
+```typescript
+await client.call("eslint_analysis", {
+  file_path: "src/components/Header.tsx",
+  auto_fix: true, // Optional: set to true to attempt auto-fixing
+  rules_override: { // Optional: override specific ESLint rules
+    "no-unused-vars": "off"
+  }
+});
+```
+
+### 5. `typescript_diagnostics`
+**Description**: TypeScript type checking and diagnostics tool.
+**Features**:
+-   **Syntax/Semantic Checks**: Perform syntax-only or full semantic checks.
+-   **Diagnostic Levels**: Filter diagnostics by error, warning, or suggestion levels.
+**Usage Example**:
+```typescript
+await client.call("typescript_diagnostics", {
+  file_path: "src/utils/helpers.ts",
+  check_type: "all", // Can be "syntax", "semantic", or "all"
+  include_suggestions: true // Optional: include suggestions in the results
+});
+```
+
+### 6. `sequential_thinking_process`
+**Description**: Step-by-step problem solving with decision trees.
+**Features**:
+-   **Structured Reasoning**: Breaks down complex problems into manageable steps.
+-   **Alternative Consideration**: Can include alternative solutions in its reasoning process.
+**Usage Example**:
+```typescript
+await client.call("sequential_thinking_process", {
+  problem_statement: "How to refactor the user authentication flow for scalability?",
+  thinking_depth: 5, // Optional: depth of the thinking process
+  include_alternatives: true // Optional: include alternative solutions
+});
+```
+
+### 7. `daily_digest_generator`
+**Description**: Generates a daily summary of completed tasks, key decisions, errors, and deadlines.
+**Features**:
+-   **Automated Reporting**: Compiles information from various memory files into a concise daily digest.
+**Usage Example**:
+```typescript
+await client.call("daily_digest_generator", {});
+```
+
+### 8. `context_condensing`
+**Description**: Condenses context based on priority and compression rate.
+**Features**:
+-   **Intelligent Summarization**: Prioritizes information based on configured rules and compresses it to a specified rate.
+**Usage Example**:
+```typescript
+await client.call("context_condensing", {
+  target_files: ["src/utils/large-log.ts", "src/data/metrics.json"],
+  compression_rate: 0.5 // Optional: target compression rate (0.0 to 1.0)
 });
 ```
 

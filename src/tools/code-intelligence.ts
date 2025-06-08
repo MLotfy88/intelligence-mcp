@@ -1,56 +1,16 @@
-import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { Config } from '../utils/config-loader.js';
 import { logger } from '../utils/logger.js';
-
-type Phase = 'inspection' | 'diagnosis' | 'execution' | 'all';
-type PriorityLevel = 'P0' | 'P1' | 'P2';
-
-interface CodeIntelligenceArgs {
-  phase: Phase;
-  file_path: string;
-  context_files?: string[];
-  priority_level?: PriorityLevel;
-}
-
-interface InspectionResult {
-  phase: 'inspection';
-  fileContent: string | null;
-  ast: any | null;
-  metrics: {
-    complexity: number;
-    dependencies: string[];
-  };
-}
-
-interface DiagnosisResult {
-  phase: 'diagnosis';
-  errors: Array<{
-    message: string;
-    line: number;
-    severity: 'error' | 'warning';
-  }>;
-  warnings: Array<{
-    message: string;
-    line: number;
-    severity: 'warning';
-  }>;
-  suggestions: Array<{
-    message: string;
-    line: number;
-  }>;
-}
-
-interface ExecutionResult {
-  phase: 'execution';
-  solutions: Array<{
-    type: string;
-    description: string;
-    code?: string;
-  }>;
-  priority: PriorityLevel;
-}
-
-type AnalysisResult = InspectionResult | DiagnosisResult | ExecutionResult;
+import * as fs from 'fs/promises';
+import * as ts from 'typescript';
+import {
+  Phase,
+  PriorityLevel,
+  CodeIntelligenceArgs,
+  InspectionResult,
+  DiagnosisResult,
+  ExecutionResult,
+  AnalysisResult
+} from '../types/code-intelligence.d.js';
 
 export function getCodeIntelligenceToolDefinition(): { name: string; description: string; schema: any; handler: any } {
   return {
@@ -102,34 +62,109 @@ async function executeCodeIntelligence(args: CodeIntelligenceArgs): Promise<Anal
 }
 
 async function inspectionPhase(args: CodeIntelligenceArgs): Promise<InspectionResult> {
-  // Implement file reading and AST parsing
+  let fileContent: string | null = null;
+  let ast: ts.SourceFile | null = null;
+  let complexity = 0;
+  const dependencies: string[] = [];
+
+  try {
+    fileContent = await fs.readFile(args.file_path, 'utf-8');
+    complexity = fileContent.split('\n').length; // Simple line count for complexity
+
+    ast = ts.createSourceFile(
+      args.file_path,
+      fileContent,
+      ts.ScriptTarget.Latest,
+      true
+    );
+
+    // Basic dependency detection (imports)
+    const importRegex = /(?:import|require)\s*['"]([^'"]+)['"]/g;
+    let match;
+    while ((match = importRegex.exec(fileContent)) !== null) {
+      dependencies.push(match[1]);
+    }
+
+  } catch (error) {
+    logger.error(`Failed to read or parse file ${args.file_path} during inspection: ${(error as Error).message}`);
+    // Continue with partial results if file cannot be read/parsed
+  }
+
   return {
     phase: 'inspection',
-    fileContent: null, // TODO: Implement file reading
-    ast: null, // TODO: Implement AST parsing
+    fileContent: fileContent,
+    ast: ast,
     metrics: {
-      complexity: 0,
-      dependencies: []
+      complexity: complexity,
+      dependencies: dependencies
     }
   };
 }
 
 async function diagnosisPhase(args: CodeIntelligenceArgs): Promise<DiagnosisResult> {
-  // Implement error detection and analysis
+  const errors: Array<{ message: string; line: number; severity: 'error' | 'warning' }> = [];
+  const warnings: Array<{ message: string; line: number; severity: 'warning' }> = [];
+  const suggestions: Array<{ message: string; line: number }> = [];
+
+  try {
+    const fileContent = await fs.readFile(args.file_path, 'utf-8');
+    const lines = fileContent.split('\n');
+
+    // Simple keyword-based error/warning/suggestion detection
+    lines.forEach((lineContent, index) => {
+      const lineNumber = index + 1;
+      if (lineContent.includes('TODO')) {
+        suggestions.push({ message: 'Consider addressing this TODO comment.', line: lineNumber });
+      }
+      if (lineContent.includes('FIXME')) {
+        warnings.push({ message: 'This code needs to be fixed.', line: lineNumber, severity: 'warning' });
+      }
+      if (lineContent.includes('console.log')) {
+        suggestions.push({ message: 'Consider removing console.log in production code.', line: lineNumber });
+      }
+      // Add more sophisticated checks here, e.g., regex for common anti-patterns
+    });
+
+  } catch (error) {
+    logger.error(`Failed to read file ${args.file_path} during diagnosis: ${(error as Error).message}`);
+    // Continue with partial results
+  }
+
   return {
     phase: 'diagnosis',
-    errors: [],
-    warnings: [],
-    suggestions: []
+    errors: errors,
+    warnings: warnings,
+    suggestions: suggestions
   };
 }
 
 async function executionPhase(args: CodeIntelligenceArgs): Promise<ExecutionResult> {
-  // Implement solution generation
+  const solutions: Array<{ type: string; description: string; code?: string }> = [];
+  const priority = args.priority_level || 'P2';
+
+  // This is a simplified example. In a real scenario, this would involve
+  // more sophisticated logic to generate code or detailed instructions
+  // based on the diagnosis results.
+  if (args.context_files && args.context_files.length > 0) {
+    solutions.push({
+      type: 'refactoring_suggestion',
+      description: `Consider refactoring based on insights from ${args.context_files.join(', ')}.`,
+      code: '// Example refactoring code snippet'
+    });
+  }
+
+  // Example: If diagnosis found 'FIXME', suggest a fix
+  // This would ideally come from actual diagnosis results passed as context
+  solutions.push({
+    type: 'bug_fix_recommendation',
+    description: 'Review and address any FIXME comments in the codebase.',
+    code: '/* Example fix: Replace old_function() with new_function() */'
+  });
+
   return {
     phase: 'execution',
-    solutions: [],
-    priority: args.priority_level || 'P2'
+    solutions: solutions,
+    priority: priority
   };
 }
 

@@ -1,19 +1,13 @@
-import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { Config } from '../utils/config-loader.js';
 import { logger } from '../utils/logger.js';
 import fs from 'fs/promises';
 import path from 'path';
 
-type FileCategory = 'core' | 'dynamic' | 'planning' | 'technical' | 'auto_generated';
-type MemoryAction = 'read' | 'write' | 'update' | 'archive' | 'search';
-
-interface MemoryBankArgs {
-  action: MemoryAction;
-  file_category: FileCategory;
-  file_name: string;
-  content?: string;
-  search_query?: string;
-}
+import {
+  FileCategory,
+  MemoryAction,
+  MemoryBankArgs
+} from '../types/memory-bank.d.js';
 
 export function getMemoryBankToolDefinition(config: Config): { name: string; description: string; schema: any; handler: any } {
   return {
@@ -94,25 +88,29 @@ async function updateMemoryFile(args: MemoryBankArgs, config: Config) {
 }
 
 async function archiveFiles(args: MemoryBankArgs, config: Config) {
-  const archivePath = config.memory.archive.path;
-  const timestamp = new Date().toISOString().replace(/[:.]/g, '-'); // YYYY-MM-DDTHH-MM-SS-sssZ
-  
-  // Create archive directory if it doesn't exist
-  await fs.mkdir(archivePath, { recursive: true });
-  
-  // Move files to archive with timestamp
-  const sourceDir = getFilePath(args.file_category, '', config);
-  const files = await fs.readdir(sourceDir);
-  
+  const baseMemoryPath = path.join('intelligence', 'memory');
+  const sourceCategoryPath = path.join(baseMemoryPath, args.file_category);
+  const archiveCategoryPath = path.join(baseMemoryPath, config.memory.archive.path, args.file_category);
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+
+  await fs.mkdir(archiveCategoryPath, { recursive: true });
+
+  const files = await fs.readdir(sourceCategoryPath);
+
   const results = await Promise.all(
     files.map(async file => {
-      const source = path.join(sourceDir, file);
-      const dest = path.join(archivePath, `${file}.${timestamp}`);
-      await fs.rename(source, dest);
-      return { file, archived: dest };
+      const sourceFilePath = path.join(sourceCategoryPath, file);
+      const destFilePath = path.join(archiveCategoryPath, `${file}.${timestamp}`);
+      try {
+        await fs.rename(sourceFilePath, destFilePath);
+        return { file, archived: destFilePath, status: 'success' };
+      } catch (error) {
+        logger.error(`Failed to archive file ${sourceFilePath}: ${(error as Error).message}`);
+        return { file, archived: null, status: 'failed', error: (error as Error).message };
+      }
     })
   );
-  
+
   return { archived: results };
 }
 
@@ -120,20 +118,39 @@ async function searchMemoryFiles(args: MemoryBankArgs, config: Config) {
   if (!args.search_query) {
     throw new Error('Search query is required for search operation');
   }
-  
-  const results = [];
-  const categories = config.memory.files[args.file_category];
-  
-  for (const category of categories) {
-    const files = await fs.readdir(category);
-    for (const file of files) {
-      const content = await fs.readFile(path.join(category, file), 'utf-8');
-      if (content.includes(args.search_query)) {
-        results.push({ file, category });
+
+  const results: { file: string; category: FileCategory; content_preview: string }[] = [];
+  const targetDirectory = getFilePath(args.file_category, '', config);
+
+  try {
+    const filesInDirectory = await fs.readdir(targetDirectory);
+
+    for (const file of filesInDirectory) {
+      const filePath = path.join(targetDirectory, file);
+      try {
+        const content = await fs.readFile(filePath, 'utf-8');
+        if (content.includes(args.search_query)) {
+          // Provide a content preview for context
+          const previewIndex = content.indexOf(args.search_query);
+          const previewStart = Math.max(0, previewIndex - 50);
+          const previewEnd = Math.min(content.length, previewIndex + args.search_query.length + 50);
+          const content_preview = content.substring(previewStart, previewEnd);
+
+          results.push({
+            file: file,
+            category: args.file_category,
+            content_preview: content_preview
+          });
+        }
+      } catch (fileReadError) {
+        logger.warn(`Could not read file ${filePath} during search: ${(fileReadError as Error).message}`);
       }
     }
+  } catch (dirReadError) {
+    logger.error(`Could not read directory ${targetDirectory} for search: ${(dirReadError as Error).message}`);
+    throw dirReadError;
   }
-  
+
   return { results };
 }
 
