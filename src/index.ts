@@ -1,11 +1,12 @@
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
-import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { loadConfig } from './utils/config-loader.js';
 import { getToolDefinitions } from './tools/index.js';
 import { getMemoryBankToolDefinition } from './tools/memory-bank.js'; // Import directly
 import { handleError } from './utils/error-handler.js';
 import { logger } from './utils/logger.js';
 import { readFile } from 'fs/promises';
+import express from 'express';
 
 async function main() {
   try {
@@ -32,14 +33,27 @@ async function main() {
 
     const tools = getToolDefinitions(config);
 
+    const app = express();
+    app.use(express.json()); // For parsing application/json
+
+    const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
+
     const server = new Server({
       name: "roo-code-intelligence",
       version: "2.1.0",
-      transport: new StdioServerTransport(),
+      transport: transport,
       tools: tools
     });
 
-    logger.info('MCP Server started successfully');
+    // Handle all requests with the transport
+    app.all('/mcp', async (req, res) => {
+      await transport.handleRequest(req, res, req.body);
+    });
+
+    const port = process.env.PORT ? parseInt(process.env.PORT) : 3000;
+    app.listen(port, () => {
+      logger.info(`MCP Server started successfully on port ${port}`);
+    });
 
   } catch (error: unknown) {
     const err = error as Error;
