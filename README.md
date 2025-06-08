@@ -114,12 +114,7 @@
 {
   "mcpServers": {
     "roo-code-intelligence": {
-      "command": "node",
-      "args": ["./dist/index.js"],
-      "cwd": "/workspaces/intelligence-mcp",
-      "env": {
-        "SERP_API_KEY": "your_serp_api_key_here"
-      }
+      "serverUrl": "https://intelligence-mcp.onrender.com"
     }
   }
 }
