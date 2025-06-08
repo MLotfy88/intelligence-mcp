@@ -7,33 +7,55 @@ import { logger } from './utils/logger.js';
 
 async function main() {
   try {
-    // Initialize Express app for HTTP layer
     const app = express();
 
-    // Initialize MCP Server with StdioServerTransport
     const server = new Server({
       name: "roo-code-intelligence",
       version: "2.1.0",
       transport: new StdioServerTransport()
     });
 
-    // Load configuration
     const config = await loadConfig();
+    if (process.env.SERP_API_KEY) {
+      config.integrations.serpapi.api_key = process.env.SERP_API_KEY;
+      logger.info('SERP_API_KEY loaded from environment variables');
+    }
 
-    // Register all tools
     await registerTools(server, config);
-
-    // Start the MCP server
     await server.start();
     logger.info('MCP Server started successfully');
 
-    // Expose a simple HTTP endpoint for health check
-    const port = parseInt(process.env.PORT || '10000'); // تحويل المنفذ لـ number
+    const port = parseInt(process.env.PORT || '10000');
+
+    // دعم GET وPOST على /health
     app.get('/health', (req: Request, res: Response) => {
       res.status(200).send('Server is running');
     });
+    app.post('/health', (req: Request, res: Response) => {
+      res.status(200).send('Server is running (POST)');
+    });
 
-    // Start the HTTP server
+    // دعم POST لاستدعاء الأدوات (مثل web_search_enhanced)
+    app.post('/api/tool', (req: Request, res: Response) => {
+      try {
+        const { tool, params } = req.body;
+        if (!tool || !params) {
+          return res.status(400).send('Tool name and params are required');
+        }
+
+        if (tool === 'web_search_enhanced') {
+          // هنا ممكن تضيف منطق لاستدعاء الأداة (مؤقتًا برسالة نجاح)
+          logger.info(`Executing ${tool} with params: ${JSON.stringify(params)}`);
+          res.status(200).send({ result: 'Tool executed successfully', tool, params });
+        } else {
+          res.status(400).send('Tool not supported');
+        }
+      } catch (error) {
+        logger.error('Error executing tool', error);
+        res.status(500).send('Internal server error');
+      }
+    });
+
     app.listen(port, '0.0.0.0', () => {
       logger.info(`HTTP Server started on port ${port}`);
     });
