@@ -1,4 +1,4 @@
-import { Server } from '../types/mcp-sdk.js';
+import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { Config } from '../utils/config-loader.js';
 import { logger } from '../utils/logger.js';
 import * as ts from 'typescript';
@@ -33,8 +33,8 @@ interface DiagnosticResult {
   };
 }
 
-export async function registerTypeScript(server: Server, config: Config): Promise<void> {
-  server.addTool({
+export function getTypeScriptToolDefinition(config: Config): { name: string; description: string; schema: any; handler: any } {
+  return {
     name: 'typescript_diagnostics',
     description: 'TypeScript type checking and diagnostics',
     schema: {
@@ -65,7 +65,7 @@ export async function registerTypeScript(server: Server, config: Config): Promis
         throw error;
       }
     }
-  });
+  };
 }
 
 function createProgram(filePath: string, config: Config): ts.Program {

@@ -1,4 +1,4 @@
-import { Server } from '../types/mcp-sdk.js';
+import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { Config } from '../utils/config-loader.js';
 import { logger } from '../utils/logger.js';
 
@@ -52,8 +52,8 @@ interface ExecutionResult {
 
 type AnalysisResult = InspectionResult | DiagnosisResult | ExecutionResult;
 
-export async function registerCodeIntelligence(server: Server, config: Config): Promise<void> {
-  server.addTool({
+export function getCodeIntelligenceToolDefinition(): { name: string; description: string; schema: any; handler: any } {
+  return {
     name: 'code_intelligence_analyze',
     description: 'Three-phase code analysis: Inspection → Diagnosis → Execution',
     schema: {
@@ -76,7 +76,7 @@ export async function registerCodeIntelligence(server: Server, config: Config): 
       required: ['phase', 'file_path']
     },
     handler: executeCodeIntelligence
-  });
+  };
 }
 
 async function executeCodeIntelligence(args: CodeIntelligenceArgs): Promise<AnalysisResult | { inspection: InspectionResult; diagnosis: DiagnosisResult; execution: ExecutionResult }> {

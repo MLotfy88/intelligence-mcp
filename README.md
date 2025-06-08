@@ -1,46 +1,44 @@
 # intelligence-mcp
 
-<div dir="rtl">
+# MCP Server Usage Guide for AI (Roo Code Intelligence)
 
-# دليل استخدام خادم MCP للذكاء الاصطناعي (Roo Code Intelligence)
+## 🎯 Project Overview
 
-## 🎯 نظرة عامة على المشروع
+This project is an integrated MCP (Model Context Protocol) server designed to provide advanced AI capabilities for code analysis. The server integrates multiple specialized tools and follows a three-phase analysis workflow (Inspection → Diagnosis → Execution) to deliver comprehensive code insights and solutions.
 
-هذا المشروع هو خادم MCP (Model Context Protocol) متكامل مصمم لتوفير قدرات ذكاء اصطناعي متقدمة لتحليل الكود. يدمج الخادم أدوات متخصصة متعددة ويتبع سير عمل تحليل ثلاثي المراحل (الفحص ← التشخيص ← التنفيذ) لتقديم رؤى وحلول شاملة للكود.
+## 🚀 Prerequisites
 
-## 🚀 المتطلبات الأساسية
+Ensure the following software is installed on your system:
 
-تأكد من تثبيت البرامج التالية على نظامك:
+-   **Node.js**: Version 18 or later.
+-   **npm**: Node.js package manager (comes with Node.js).
+-   **Git**: For cloning the repository.
 
--   **Node.js**: الإصدار 18 أو أحدث.
--   **npm**: مدير حزم Node.js (يأتي مع Node.js).
--   **Git**: لنسخ المستودع.
+## 🛠️ Installation and Setup Steps
 
-## 🛠️ خطوات التثبيت والإعداد
+Follow these steps to set up and run the server locally:
 
-اتبع هذه الخطوات لإعداد وتشغيل الخادم محليًا:
-
-1.  **نسخ المستودع**:
-    افتح الطرفية (Terminal) وقم بنسخ المستودع:
+1.  **Clone the Repository**:
+    Open your terminal and clone the repository:
     ```bash
     git clone https://github.com/yourusername/intelligence-mcp.git
     cd intelligence-mcp
     ```
 
-2.  **تثبيت الاعتماديات**:
-    انتقل إلى دليل المشروع وقم بتثبيت جميع الاعتماديات اللازمة:
+2.  **Install Dependencies**:
+    Navigate to the project directory and install all necessary dependencies:
     ```bash
     npm install
     ```
 
-3.  **بناء المشروع**:
-    قم ببناء مشروع TypeScript لتحويل الكود المصدري إلى JavaScript قابل للتنفيذ:
+3.  **Build the Project**:
+    Build the TypeScript project to transpile source code into executable JavaScript:
     ```bash
     npm run build
     ```
 
-4.  **إعداد ملف التكوين (`.roo/code-intelligence.yaml`)**:
-    يستخدم الخادم ملف تكوين YAML لإدارة الإعدادات. تأكد من وجود الملف `.roo/code-intelligence.yaml` في جذر المشروع. إذا لم يكن موجودًا، يمكنك إنشاؤه بالمحتوى التالي (أو تعديل الموجود):
+4.  **Configure `.roo/code-intelligence.yaml`**:
+    The server uses a YAML configuration file to manage settings. Ensure that `.roo/code-intelligence.yaml` exists in the project root. If not, you can create it with the following content (or modify an existing one):
 
     ```yaml
     version: 2.0
@@ -61,7 +59,7 @@
       P2: [general_discussion]
     integrations:
       serpapi:
-        api_key: "" # يجب تعيين هذا المفتاح من متغيرات البيئة أو أسرار GitHub
+        api_key: "" # This key should be set from environment variables or GitHub secrets
         rate_limit: 100
         cache_duration: "1h"
       eslint:
@@ -73,42 +71,42 @@
         check_on_save: true
         diagnostic_level: "error"
     ```
-    **ملاحظة**: بالنسبة لـ `serpapi.api_key`، يفضل استخدام متغيرات البيئة (مثل `SERP_API_KEY` في ملف `.env`) أو أسرار GitHub بدلاً من تضمينه مباشرة في هذا الملف لأسباب أمنية.
+    **Note**: For `serpapi.api_key`, it is recommended to use environment variables (e.g., `SERP_API_KEY` in a `.env` file) or GitHub secrets instead of embedding it directly in this file for security reasons.
 
-5.  **إعداد متغيرات البيئة (`.env`)**:
-    لتعيين مفتاح API الخاص بـ SerpAPI وأي متغيرات بيئة أخرى، قم بإنشاء ملف `.env` في جذر المشروع (إذا لم يكن موجودًا) وأضف المتغيرات التالية:
+5.  **Set Environment Variables (`.env`)**:
+    To set your SerpAPI key and any other environment variables, create a `.env` file in the project root (if it doesn't exist) and add the following variables:
 
     ```dotenv
     SERP_API_KEY=your_serp_api_key_here
-    # يمكنك إضافة متغيرات بيئة أخرى هنا إذا لزم الأمر
+    # You can add other environment variables here if needed
     ```
-    **تأكد من استبدال `your_serp_api_key_here` بمفتاح API الفعلي الخاص بك.**
+    **Make sure to replace `your_serp_api_key_here` with your actual API key.**
 
-## 🖥️ تشغيل الخادم محليًا
+## 🖥️ Running the Server Locally
 
-بعد إكمال خطوات التثبيت، يمكنك تشغيل الخادم:
+After completing the installation steps, you can run the server:
 
-1.  **تشغيل الخادم**:
+1.  **Start the Server**:
     ```bash
     npm run start
     ```
-    سيقوم هذا الأمر بتشغيل الخادم في وضع الإنتاج. سترى رسالة في الطرفية تشير إلى أن الخادم قد بدأ بنجاح.
+    This command will run the server in production mode. You will see a message in the terminal indicating that the server has started successfully.
 
-2.  **تشغيل الخادم مع المراقبة (للتطوير)**:
-    إذا كنت تقوم بالتطوير وترغب في إعادة تشغيل الخادم تلقائيًا عند حفظ التغييرات، استخدم:
+2.  **Run the Server with Watch (for Development)**:
+    If you are developing and want the server to restart automatically when changes are saved, use:
     ```bash
     npm run watch
     ```
 
-## 🔌 دمج الخادم مع عميل MCP (مثل VS Code)
+## 🔌 Integrating the Server with an MCP Client (e.g., VS Code)
 
-لجعل الخادم يعمل "أونلاين" أو يتفاعل مع بيئة تطوير مثل VS Code، تحتاج إلى تكوين عميل MCP (مثل ملحق Claude Desktop أو أي ملحق يدعم MCP) للاتصال بالخادم المحلي.
+To make the server "online" or interact with a development environment like VS Code, you need to configure an MCP client (such as the Claude Desktop extension or any MCP-enabled extension) to connect to your local server.
 
-### مثال لتكوين VS Code (باستخدام ملحق يدعم MCP):
+### Example VS Code Configuration (using an MCP-enabled extension):
 
-عادةً، تتطلب ملحقات MCP تكوينًا في ملف JSON (مثل `~/.claude-desktop/claude_desktop_config.json` أو إعدادات المستخدم في VS Code). ستحتاج إلى إضافة إدخال لخادمك.
+Typically, MCP extensions require configuration in a JSON file (e.g., `~/.claude-desktop/claude_desktop_config.json` or VS Code user settings). You will need to add an entry for your server.
 
-إليك مثال على كيفية تكوين خادمك في ملف `claude_desktop_config.json`:
+Here's an example of how to configure your server in a `claude_desktop_config.json` file:
 
 ```json
 {
@@ -120,50 +118,56 @@
 }
 ```
 
-## 🔧 الأدوات المتاحة
+## 🔧 Available Tools
 
-يوفر خادم Roo Code Intelligence الأدوات التالية:
+The Roo Code Intelligence server provides the following tools:
 
--   `roo_code_workflow`: لتنفيذ سير عمل التحليل الكامل (الفحص، التشخيص، التنفيذ).
--   `code_intelligence_analyze`: محرك تحليل الكود ثلاثي المراحل.
--   `web_search_enhanced`: تكامل SerpAPI للبحث على الويب مع التخزين المؤقت.
--   `memory_bank_manager`: نظام إدارة ملفات الذاكرة المنظمة مع الأرشفة التلقائية.
--   `eslint_analysis`: أداة تحليل جودة الكود باستخدام ESLint مع إمكانيات الإصلاح التلقائي.
--   `typescript_diagnostics`: أداة فحص أنواع TypeScript والتشخيصات.
+-   `roo_code_workflow`: To execute the full analysis workflow (Inspection, Diagnosis, Execution).
+-   `code_intelligence_analyze`: The three-phase code analysis engine.
+-   `web_search_enhanced`: SerpAPI integration for web search with caching.
+-   `memory_bank_manager`: Structured memory file management system with automatic archiving.
+-   `eslint_analysis`: Code quality analysis tool using ESLint with auto-fix capabilities.
+-   `typescript_diagnostics`: TypeScript type checking and diagnostics tool.
+-   `daily_digest_generator`: Generates a daily summary of completed tasks, key decisions, errors, and deadlines.
+-   `context_condensing`: Condenses context based on priority and compression rate.
 
-## 💡 أمثلة على الاستخدام (من خلال عميل MCP)
+## 💡 Usage Examples (via MCP Client)
 
-بمجرد تكوين عميل MCP الخاص بك، يمكنك استدعاء أدوات الخادم. إليك بعض الأمثلة البرمجية (باستخدام MCP SDK):
+Once your MCP client is configured, you can call the server's tools. Here are some code examples (using the MCP SDK):
 
 ```typescript
 import { MCPClient } from "@modelcontextprotocol/sdk";
 
-// قم بإنشاء عميل MCP للاتصال بالخادم المحلي
-// إذا كان الخادم يعمل محليًا عبر StdioServerTransport، فقد لا تحتاج إلى serverUrl
-// ولكن إذا كنت تستخدم خادمًا مستضافًا عبر HTTP/HTTPS، فستحتاج إلى تحديد serverUrl
+// Create an MCP client to connect to the local server
+// If the server is running locally via StdioServerTransport, you might not need serverUrl
+// But if you are using a hosted server via HTTP/HTTPS, you will need to specify serverUrl
 const client = new MCPClient({
-    serverName: "roo-code-intelligence" // يجب أن يتطابق هذا مع اسم الخادم في تكوين العميل
+    serverName: "roo-code-intelligence" // This must match the server name in the client configuration
 });
 
-// مثال 1: تحليل كود كامل لملف
+// Example 1: Full code analysis for a file
 await client.call("roo_code_workflow", {
   workflow_type: "full_analysis",
   target_files: ["src/auth.ts", "src/types.ts"],
   include_web_search: true
 });
 
-// مثال 2: فحص سريع لـ ESLint
+// Example 2: Quick ESLint check
 await client.call("eslint_analysis", {
   file_path: "src/components/Header.tsx",
   auto_fix: true
 });
 
-// مثال 3: تكثيف السياق
-await client.call("roo_code_workflow", {
-  workflow_type: "context_condensing"
+// Example 3: Context Condensing
+await client.call("context_condensing", {
+  target_files: ["src/utils/large-log.ts"],
+  compression_rate: 0.5
 });
 
-// مثال 4: بحث على الويب عن حلول
+// Example 4: Generate Daily Digest
+await client.call("daily_digest_generator", {});
+
+// Example 5: Web search for solutions
 await client.call("web_search_enhanced", {
   query: "TypeScript interface extends generic constraint",
   search_type: "documentation",
@@ -171,86 +175,84 @@ await client.call("web_search_enhanced", {
 });
 ```
 
-## ⚠️ حل المشكلات الشائعة
+## ⚠️ Common Troubleshooting
 
--   **مشاكل الاتصال**:
-    -   تأكد من أن الخادم يعمل (تحقق من الطرفية التي قمت بتشغيل `npm run start` فيها).
-    -   تأكد من أن مسار `cwd` في تكوين عميل MCP صحيح ويشير إلى جذر مشروعك.
-    -   تأكد من أن اسم الخادم (`"roo-code-intelligence"`) في تكوين العميل يطابق الاسم المحدد في `src/index.ts`.
--   **مشاكل TypeScript**:
-    -   تأكد من وجود ملف `tsconfig.json` صحيح في جذر المشروع.
-    -   تأكد من أن `tsconfig_path` في `.roo/code-intelligence.yaml` يشير إلى المسار الصحيح.
--   **مشاكل ESLint**:
-    -   تحقق من وجود ملف `.eslintrc.cjs` أو `.eslintrc.js` في جذر المشروع.
-    -   تأكد من أن `config_path` في `.roo/code-intelligence.yaml` يشير إلى المسار الصحيح.
--   **مشاكل SerpAPI**:
-    -   تأكد من تعيين `SERP_API_KEY` بشكل صحيح في ملف `.env` أو في متغيرات البيئة الخاصة بتكوين عميل MCP.
+-   **Connection Issues**:
+    -   Ensure the server is running (check the terminal where you ran `npm run start`).
+    -   Ensure the `cwd` path in your MCP client configuration is correct and points to your project root.
+    -   Ensure the server name (`"roo-code-intelligence"`) in the client configuration matches the name specified in `src/index.ts`.
+-   **TypeScript Issues**:
+    -   Ensure a correct `tsconfig.json` file exists in the project root.
+    -   Ensure `tsconfig_path` in `.roo/code-intelligence.yaml` points to the correct path.
+-   **ESLint Issues**:
+    -   Check for a `.eslintrc.cjs` or `.eslintrc.js` file in the project root.
+    -   Ensure `config_path` in `.roo/code-intelligence.yaml` points to the correct path.
+-   **SerpAPI Issues**:
+    -   Ensure `SERP_API_KEY` is correctly set in your `.env` file or in the environment variables of your MCP client configuration.
 
-## ☁️ استضافة السيرفر على الإنترنت
+## ☁️ Hosting the Server Online
 
-يمكنك استضافة هذا الخادم على منصات سحابية مختلفة لجعله متاحًا عبر الإنترنت. إليك بعض الخيارات الشائعة:
+You can host this server on various cloud platforms to make it accessible online. Here are some common options:
 
-### 1. استضافة على Railway
+### 1. Hosting on Railway
 
--   قم بإنشاء حساب على [Railway](https://railway.app).
--   اربط حسابك على GitHub بالمستودع الخاص بك.
--   سيقوم Railway تلقائيًا باكتشاف مشروع Node.js ونشره.
+-   Create an account on [Railway](https://railway.app).
+-   Connect your GitHub account to your repository.
+-   Railway will automatically detect your Node.js project and deploy it.
 
-### 2. استضافة على Render
+### 2. Hosting on Render
 
--   قم بإنشاء حساب على [Render](https://render.com).
--   اختر "New Web Service" وقم بربط مستودع GitHub الخاص بك.
--   اضبط إعدادات البناء والبدء:
+-   Create an account on [Render](https://render.com).
+-   Choose "New Web Service" and connect your GitHub repository.
+-   Set build and start commands:
     ```
     Build Command: npm install && npm run build
     Start Command: npm start
     ```
 
-### 3. استضافة على Heroku
+### 3. Hosting on Heroku
 
--   قم بإنشاء حساب على [Heroku](https://heroku.com).
--   قم بتثبيت Heroku CLI.
--   قم برفع المشروع باستخدام Git:
+-   Create an account on [Heroku](https://heroku.com).
+-   Install the Heroku CLI.
+-   Upload the project using Git:
     ```bash
-    heroku create your-mcp-server-name # استبدل بالاسم الذي تختاره
+    heroku create your-mcp-server-name # Replace with your chosen name
     git push heroku main
     ```
 
-### ملاحظات هامة للاستضافة عبر الإنترنت:
+### Important Notes for Online Hosting:
 
--   **متغيرات البيئة**: تأكد من ضبط جميع متغيرات البيئة المطلوبة (مثل `SERP_API_KEY`) على منصة الاستضافة.
--   **تكوين الخادم**: قد تحتاج إلى تعديل ملف التكوين `.roo/code-intelligence.yaml` أو منطق الخادم (خاصة في `src/index.ts`) لاستخدام `HttpServerTransport` بدلاً من `StdioServerTransport` إذا كنت تستضيفه كخدمة ويب قياسية.
--   **CORS**: إذا كنت ستتصل بالخادم من نطاقات مختلفة (مثل تطبيق ويب أمامي)، فستحتاج إلى تمكين CORS (Cross-Origin Resource Sharing) على الخادم.
--   **HTTPS**: استخدم دائمًا HTTPS للاتصال الآمن بالخادم المستضاف.
+-   **Environment Variables**: Ensure all required environment variables (like `SERP_API_KEY`) are set on the hosting platform.
+-   **Server Configuration**: You might need to modify the `.roo/code-intelligence.yaml` configuration file or server logic (especially in `src/index.ts`) to use `HttpServerTransport` instead of `StdioServerTransport` if you are hosting it as a standard web service.
+-   **CORS**: If you will be connecting to the server from different domains (e.g., a frontend web application), you will need to enable CORS (Cross-Origin Resource Sharing) on the server.
+-   **HTTPS**: Always use HTTPS for secure connections to the hosted server.
 
-بعد الاستضافة، ستحصل على عنوان URL للخادم (مثال: `https://your-server-url.com`). يمكنك بعد ذلك تكوين عميل MCP الخاص بك للاتصال بهذا العنوان:
+After hosting, you will get a server URL (example: `https://your-server-url.com`). You can then configure your MCP client to connect to this address:
 
 ```typescript
 import { MCPClient } from "@modelcontextprotocol/sdk";
 
 const client = new MCPClient({
-    serverUrl: "https://your-server-url.com" // رابط السيرفر الخاص بك بعد الاستضافة
+    serverUrl: "https://your-server-url.com" // Your server URL after hosting
 });
 
-// الآن يمكنك استخدام السيرفر من أي مكان
+// Now you can use the server from anywhere
 await client.call("typescript_diagnostics", {
     file_path: "src/main.ts",
     check_type: "all"
 });
 ```
 
-## 🤝 المساهمة في المشروع
+## 🤝 Contributing to the Project
 
-نرحب بمساهماتكم! يرجى اتباع الخطوات التالية:
+We welcome contributions! Please follow these steps:
 
-1.  عمل Fork للمستودع.
-2.  إنشاء فرع جديد للميزة أو إصلاح الأخطاء: `git checkout -b feature/your-feature-name`
-3.  القيام بالتغييرات وتقديمها: `git commit -m "feat: Add new feature"`
-4.  دفع الفرع إلى المستودع الخاص بك: `git push origin feature/your-feature-name`
-5.  فتح طلب سحب (Pull Request) إلى الفرع الرئيسي للمشروع.
+1.  Fork the repository.
+2.  Create a new branch for your feature or bug fix: `git checkout -b feature/your-feature-name`
+3.  Make your changes and commit them: `git commit -m "feat: Add new feature"`
+4.  Push the branch to your fork: `git push origin feature/your-feature-name`
+5.  Open a Pull Request to the main branch of the project.
 
-## 📄 الترخيص
+## 📄 License
 
-هذا المشروع مرخص تحت رخصة MIT. انظر ملف `LICENSE` لمزيد من التفاصيل.
-
-</div>
+This project is licensed under the MIT License. See the `LICENSE` file for more details.

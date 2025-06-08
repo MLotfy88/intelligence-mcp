@@ -1,78 +1,55 @@
-import express, { Request, Response } from 'express';
-import { Server, StdioServerTransport } from './types/mcp-sdk.js';
+import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { loadConfig } from './utils/config-loader.js';
-import { registerTools } from './tools/index.js';
+import { getToolDefinitions } from './tools/index.js';
+import { getMemoryBankToolDefinition } from './tools/memory-bank.js'; // Import directly
 import { handleError } from './utils/error-handler.js';
 import { logger } from './utils/logger.js';
+import { readFile } from 'fs/promises';
 
 async function main() {
   try {
-    const app = express();
-    app.use(express.json()); // إضافة لقراءة الـ JSON من الطلبات
-
-    const server = new Server({
-      name: "roo-code-intelligence",
-      version: "2.1.0",
-      transport: new StdioServerTransport()
-    });
-
     const config = await loadConfig();
     if (process.env.SERP_API_KEY) {
       config.integrations.serpapi.api_key = process.env.SERP_API_KEY;
       logger.info('SERP_API_KEY loaded from environment variables');
     }
 
-    await registerTools(server, config);
-    await server.start();
+    // Initialize memory bank with project prompt before server starts
+    const mcpPromptContent = await readFile('mcp-server-prompt.md', 'utf-8');
+    const memoryBankToolDefinition = getMemoryBankToolDefinition(config); // Get the tool definition
+    if (memoryBankToolDefinition && memoryBankToolDefinition.handler) {
+      await memoryBankToolDefinition.handler({
+        action: 'write',
+        file_category: 'core',
+        file_name: 'project-brief.md',
+        content: mcpPromptContent
+      });
+      logger.info('Project prompt successfully written to memory bank.');
+    } else {
+      logger.error('Memory bank manager tool definition or handler is missing.');
+    }
+
+    const tools = getToolDefinitions(config);
+
+    const server = new Server({
+      name: "roo-code-intelligence",
+      version: "2.1.0",
+      transport: new StdioServerTransport(),
+      tools: tools
+    });
+
     logger.info('MCP Server started successfully');
 
-    const port = parseInt(process.env.PORT || '10000');
-
-    // دعم GET على /health
-    app.get('/health', (req: Request, res: Response) => {
-      res.status(200).send('Server is running');
-    });
-
-    // دعم POST على /health
-    app.post('/health', (req: Request, res: Response) => {
-      res.status(200).send('Server is running (POST)');
-    });
-
-    // دعم POST على /api/tool
-    app.post('/api/tool', (req: Request, res: Response) => {
-      try {
-        const { tool, params } = req.body;
-        if (!tool || !params) {
-          return res.status(400).send('Tool name and params are required');
-        }
-        logger.info(`Received tool: ${tool}, params: ${JSON.stringify(params)}`);
-
-        if (tool === 'web_search_enhanced') {
-          // منطق مؤقت لحين دمج الأدوات
-          logger.info(`Executing ${tool} with params: ${JSON.stringify(params)}`);
-          res.status(200).send({ result: 'Tool executed successfully', tool, params });
-        } else {
-          res.status(400).send('Tool not supported');
-        }
-      } catch (error: unknown) { // تحديد نوع error كـ unknown
-        const err = error as Error; // تحويل error لنوع Error
-        logger.error('Error executing tool', { error: err.message, stack: err.stack });
-        res.status(500).send('Internal server error');
-      }
-    });
-
-    app.listen(port, '0.0.0.0', () => {
-      logger.info(`HTTP Server started on port ${port}`);
-    });
   } catch (error: unknown) {
-    const err = error as Error; // تحويل error لنوع Error
+    const err = error as Error;
     handleError('Server initialization failed', err);
     process.exit(1);
   }
 }
 
 main().catch((error: unknown) => {
-  const err = error as Error; // تحويل error لنوع Error
+  const err = error as Error;
   handleError('Unhandled error in main', err);
   process.exit(1);
 });

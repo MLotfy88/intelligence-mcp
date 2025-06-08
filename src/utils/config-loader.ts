@@ -22,6 +22,7 @@ export interface Config {
     P0: string[];
     P1: string[];
     P2: string[];
+    default_compression_rate?: number;
   };
   integrations: {
     serpapi: {
@@ -36,6 +37,11 @@ export interface Config {
     typescript: {
       tsconfig_path: string;
       check_on_save: boolean;
+    };
+    sequential_thinking: {
+      enabled: boolean;
+      max_depth: number;
+      timeout: string;
     };
   };
 }

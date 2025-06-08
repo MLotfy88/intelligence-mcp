@@ -1,4 +1,4 @@
-import { Server } from '../types/mcp-sdk.js';
+import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { Config } from '../utils/config-loader.js';
 import { logger } from '../utils/logger.js';
 
@@ -8,8 +8,8 @@ interface WebSearchArgs {
   max_results: number;
 }
 
-export async function registerWebSearch(server: Server, config: Config) {
-  server.addTool({
+export function getWebSearchToolDefinition(config: Config): { name: string; description: string; schema: any; handler: any } {
+  return {
     name: 'web_search_enhanced',
     description: 'Enhanced web search with result caching and context integration',
     schema: {
@@ -50,7 +50,7 @@ export async function registerWebSearch(server: Server, config: Config) {
         throw error;
       }
     }
-  });
+  };
 }
 
 async function checkCache(query: string): Promise<any> {

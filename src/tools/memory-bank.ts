@@ -1,4 +1,4 @@
-import { Server } from '../types/mcp-sdk.js';
+import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { Config } from '../utils/config-loader.js';
 import { logger } from '../utils/logger.js';
 import fs from 'fs/promises';
@@ -15,8 +15,8 @@ interface MemoryBankArgs {
   search_query?: string;
 }
 
-export async function registerMemoryBank(server: Server, config: Config) {
-  server.addTool({
+export function getMemoryBankToolDefinition(config: Config): { name: string; description: string; schema: any; handler: any } {
+  return {
     name: 'memory_bank_manager',
     description: 'Manage structured memory files with auto-archiving',
     schema: {
@@ -59,7 +59,7 @@ export async function registerMemoryBank(server: Server, config: Config) {
         throw error;
       }
     }
-  });
+  };
 }
 
 async function readMemoryFile(args: MemoryBankArgs, config: Config) {
@@ -86,7 +86,7 @@ async function updateMemoryFile(args: MemoryBankArgs, config: Config) {
   }
   
   const filePath = getFilePath(args.file_category, args.file_name, config);
-  const timestamp = new Date().toISOString();
+  const timestamp = new Date().toLocaleString(); // Use toLocaleString for a more readable date/time
   const content = `${args.content}\n\nLast updated: ${timestamp}`;
   
   await fs.writeFile(filePath, content);
@@ -95,7 +95,7 @@ async function updateMemoryFile(args: MemoryBankArgs, config: Config) {
 
 async function archiveFiles(args: MemoryBankArgs, config: Config) {
   const archivePath = config.memory.archive.path;
-  const timestamp = new Date().toISOString();
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-'); // YYYY-MM-DDTHH-MM-SS-sssZ
   
   // Create archive directory if it doesn't exist
   await fs.mkdir(archivePath, { recursive: true });
@@ -138,5 +138,5 @@ async function searchMemoryFiles(args: MemoryBankArgs, config: Config) {
 }
 
 function getFilePath(category: FileCategory, fileName: string, config: Config): string {
-  return path.join('.roo', 'memory', category, fileName);
+  return path.join('intelligence', 'memory', category, fileName);
 }

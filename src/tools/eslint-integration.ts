@@ -1,4 +1,4 @@
-import { Server } from '../types/mcp-sdk.js';
+import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { Config } from '../utils/config-loader.js';
 import { logger } from '../utils/logger.js';
 import type { ESLint } from 'eslint';
@@ -51,15 +51,15 @@ interface FormattedResult {
   };
 }
 
-export async function registerESLint(server: Server, config: Config): Promise<void> {
-  server.addTool({
+export function getESLintToolDefinition(config: Config): { name: string; description: string; schema: any; handler: any } {
+  return {
     name: 'eslint_analysis',
     description: 'Code quality analysis with auto-fix capabilities',
     schema: {
       type: 'object',
       properties: {
         file_path: { type: 'string' },
-        auto_fix: { 
+        auto_fix: {
           type: 'boolean',
           default: false
         },
@@ -96,7 +96,7 @@ export async function registerESLint(server: Server, config: Config): Promise<vo
         throw error;
       }
     }
-  });
+  };
 }
 
 function formatResults(results: LintResult[]): FormattedResult {
