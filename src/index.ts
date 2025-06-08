@@ -54,8 +54,9 @@ async function main() {
         } else {
           res.status(400).send('Tool not supported');
         }
-      } catch (error) {
-        logger.error('Error executing tool', { error: error.message, stack: error.stack });
+      } catch (error: unknown) { // تحديد نوع error كـ unknown
+        const err = error as Error; // تحويل error لنوع Error
+        logger.error('Error executing tool', { error: err.message, stack: err.stack });
         res.status(500).send('Internal server error');
       }
     });
@@ -63,13 +64,15 @@ async function main() {
     app.listen(port, '0.0.0.0', () => {
       logger.info(`HTTP Server started on port ${port}`);
     });
-  } catch (error) {
-    handleError('Server initialization failed', error);
+  } catch (error: unknown) {
+    const err = error as Error; // تحويل error لنوع Error
+    handleError('Server initialization failed', err);
     process.exit(1);
   }
 }
 
-main().catch(error => {
-  handleError('Unhandled error in main', error);
+main().catch((error: unknown) => {
+  const err = error as Error; // تحويل error لنوع Error
+  handleError('Unhandled error in main', err);
   process.exit(1);
 });
