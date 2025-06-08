@@ -28,7 +28,7 @@ async function main() {
     logger.info('MCP Server started successfully');
 
     // Expose a simple HTTP endpoint for health check
-    const port = process.env.PORT || 10000; // Use Render's PORT or fallback to 10000
+    const port = parseInt(process.env.PORT || '10000'); // تحويل المنفذ لـ number
     app.get('/health', (req: Request, res: Response) => {
       res.status(200).send('Server is running');
     });
