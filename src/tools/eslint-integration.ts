@@ -1,5 +1,6 @@
 import { Config } from '../utils/config-loader.js';
 import { logger } from '../utils/logger.js';
+import { Linter } from 'eslint';
 import {
   ESLintArgs,
   LintResult,
@@ -35,7 +36,7 @@ export function getESLintToolDefinition(config: Config): { name: string; descrip
         const eslint = new ESLint({
           fix: args.auto_fix && config.integrations.eslint.auto_fix,
           overrideConfig: {
-            rules: args.rules_override
+            rules: args.rules_override as Linter.RulesRecord
           }
         });
 

@@ -1,7 +1,9 @@
+import { Linter } from 'eslint';
+
 interface ESLintArgs {
   file_path: string;
   auto_fix: boolean;
-  rules_override?: Record<string, unknown>; // ESLint rules can have various types of values
+  rules_override?: Linter.RulesRecord;
 }
 
 interface LintMessageFix {
