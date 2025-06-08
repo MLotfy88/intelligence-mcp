@@ -2,9 +2,9 @@ import { Config } from '../utils/config-loader.js';
 import { logger } from '../utils/logger.js';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { WebSearchArgs } from '../types/serpapi.d.js';
+import { WebSearchArgs, FormattedSearchResults } from '../types/serpapi.d.js';
 
-export function getWebSearchToolDefinition(config: Config): { name: string; description: string; schema: object; handler: (args: WebSearchArgs) => Promise<any> } {
+export function getWebSearchToolDefinition(config: Config): { name: string; description: string; schema: object; handler: (args: WebSearchArgs) => Promise<FormattedSearchResults> } {
   return {
     name: 'web_search_enhanced',
     description: 'Enhanced web search with result caching and context integration',
@@ -23,7 +23,7 @@ export function getWebSearchToolDefinition(config: Config): { name: string; desc
       },
       required: ['query', 'search_type']
     },
-    handler: async (args: WebSearchArgs) => {
+    handler: async (args: WebSearchArgs): Promise<FormattedSearchResults> => {
       logger.info(`Performing web search: ${args.query}`);
       
       try {
@@ -51,7 +51,7 @@ export function getWebSearchToolDefinition(config: Config): { name: string; desc
 
 const CACHE_DIR = 'intelligence/cache/serpapi';
 
-async function checkCache(query: string): Promise<any | null> {
+async function checkCache(query: string): Promise<FormattedSearchResults | null> {
   const cacheFilePath = getCacheFilePath(query);
   try {
     const cacheContent = await fs.readFile(cacheFilePath, 'utf-8');
@@ -72,7 +72,7 @@ async function checkCache(query: string): Promise<any | null> {
   }
 }
 
-async function performSearch(args: WebSearchArgs, config: Config) {
+async function performSearch(args: WebSearchArgs, config: Config): Promise<FormattedSearchResults> {
   const apiKey = process.env.SERP_API_KEY || config.integrations.serpapi.api_key;
   if (!apiKey) {
     throw new Error('SERP_API_KEY not configured');
@@ -93,7 +93,7 @@ async function performSearch(args: WebSearchArgs, config: Config) {
   return formatResults(data, args.search_type);
 }
 
-async function cacheResults(query: string, results: any, cacheDuration = '1h') {
+async function cacheResults(query: string, results: FormattedSearchResults, cacheDuration = '1h'): Promise<void> {
   const cacheFilePath = getCacheFilePath(query);
   await fs.mkdir(CACHE_DIR, { recursive: true });
   const dataToCache = {
@@ -123,7 +123,7 @@ function parseDuration(duration: string): number {
   }
 }
 
-function formatResults(data: any, searchType: string) {
+function formatResults(data: any, searchType: string): FormattedSearchResults {
   // Format results based on search type
   switch (searchType) {
     case 'code':
@@ -137,7 +137,7 @@ function formatResults(data: any, searchType: string) {
   }
 }
 
-function formatCodeResults(data: any) {
+function formatCodeResults(data: any): FormattedSearchResults {
   return {
     type: 'code',
     results: data.organic_results?.map((result: any) => ({
@@ -149,7 +149,7 @@ function formatCodeResults(data: any) {
   };
 }
 
-function formatDocResults(data: any) {
+function formatDocResults(data: any): FormattedSearchResults {
   return {
     type: 'documentation',
     results: data.organic_results?.map((result: any) => ({
@@ -160,7 +160,7 @@ function formatDocResults(data: any) {
   };
 }
 
-function formatErrorResults(data: any) {
+function formatErrorResults(data: any): FormattedSearchResults {
   return {
     type: 'error_solution',
     results: data.organic_results?.map((result: any) => ({
@@ -171,7 +171,7 @@ function formatErrorResults(data: any) {
   };
 }
 
-function formatGeneralResults(data: any) {
+function formatGeneralResults(data: any): FormattedSearchResults {
   return {
     type: 'general',
     results: data.organic_results?.map((result: any) => ({
