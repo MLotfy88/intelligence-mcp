@@ -56,7 +56,7 @@ async function main() {
     });
 
     // Handle all requests with the transport
-    app.post('/mcp', async (req, res) => {
+    app.get('/mcp', async (req, res) => {
       await transport.handleRequest(req, res, req.body);
     });
 
