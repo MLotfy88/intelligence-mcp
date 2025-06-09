@@ -55,13 +55,11 @@ async function main() {
 
     // Handle all requests with the transport
     app.all('/mcp', async (req, res) => {
-      res.setHeader('Content-Type', 'application/json'); // Explicitly set Content-Type for JSON responses
       await transport.handleRequest(req, res, req.body);
     });
 
     // Handle /api/tool endpoint as well, routing to the same transport
     app.all('/api/tool', async (req, res) => {
-      res.setHeader('Content-Type', 'application/json'); // Explicitly set Content-Type for JSON responses
       await transport.handleRequest(req, res, req.body);
     });
 
