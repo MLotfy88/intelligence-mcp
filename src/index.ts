@@ -44,7 +44,9 @@ async function main() {
       allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
     }));
 
-    const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
+    const transport = new StreamableHTTPServerTransport({
+      sessionIdGenerator: () => Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15),
+    });
 
     const server = new Server({
       name: "roo-code-intelligence",
