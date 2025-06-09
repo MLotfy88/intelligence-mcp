@@ -44,25 +44,75 @@ async function main() {
       allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
     }));
 
-    const transport = new StreamableHTTPServerTransport({
-      sessionIdGenerator: () => Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15),
-    });
+    const transports: { [sessionId: string]: StreamableHTTPServerTransport } = {};
 
     const server = new Server({
       name: "roo-code-intelligence",
       version: "2.1.0",
-      transport: transport,
       tools: tools
     });
 
-    // Handle all requests with the transport
-    app.get('/mcp', async (req, res) => {
+    app.post('/mcp', async (req, res) => {
+      let sessionId = req.headers['mcp-session-id'] as string;
+      if (!sessionId) {
+        sessionId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+        res.setHeader('Mcp-Session-Id', sessionId);
+      }
+      let transport = transports[sessionId];
+      if (!transport) {
+        transport = new StreamableHTTPServerTransport({ sessionIdGenerator: () => sessionId });
+        transports[sessionId] = transport;
+        await server.connect(transport);
+      }
       await transport.handleRequest(req, res, req.body);
+    });
+
+    app.get('/mcp', async (req, res) => {
+      const sessionId = req.headers['mcp-session-id'] as string;
+      if (!sessionId) {
+        res.status(400).send('Missing Mcp-Session-Id header');
+        return;
+      }
+      const transport = transports[sessionId];
+      if (!transport) {
+        res.status(404).send('Session not found');
+        return;
+      }
+      res.setHeader('Content-Type', 'text/event-stream');
+      await transport.handleRequest(req, res, null);
+    });
+
+    app.delete('/mcp', async (req, res) => {
+      const sessionId = req.headers['mcp-session-id'] as string;
+      if (!sessionId) {
+        res.status(400).send('Missing Mcp-Session-Id header');
+        return;
+      }
+      const transport = transports[sessionId];
+      if (transport) {
+        transport.close();
+        delete transports[sessionId];
+      }
+      res.status(200).send('Session terminated');
     });
 
     // Handle /api/tool endpoint as well, routing to the same transport
     app.post('/api/tool', async (req, res) => {
+      // For /api/tool, we assume a session is already established or it's a stateless call
+      // If a session ID is provided, use the existing transport
+      const sessionId = req.headers['mcp-session-id'] as string;
+      let transport = sessionId ? transports[sessionId] : undefined;
+
+      if (!transport) {
+        // If no session or session not found, create a new stateless transport for this request
+        transport = new StreamableHTTPServerTransport({ sessionIdGenerator: () => Math.random().toString(36).substring(2, 15) }); // Stateless for this specific tool call
+        await server.connect(transport); // Connect for this single request
+      }
       await transport.handleRequest(req, res, req.body);
+      // If stateless, close the transport after handling the request
+      if (!sessionId) {
+        transport.close();
+      }
     });
 
     // Add a basic health check endpoint
