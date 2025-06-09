@@ -1,7 +1,7 @@
 {
   "mcpServers": {
     "roo-code-intelligence": {
-      "type": "http",
+      "type": "sse",
       "url": "https://intelligence-mcp.onrender.com/mcp"
     }
   }
