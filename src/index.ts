@@ -56,12 +56,12 @@ async function main() {
     });
 
     // Handle all requests with the transport
-    app.all('/mcp', async (req, res) => {
+    app.post('/mcp', async (req, res) => {
       await transport.handleRequest(req, res, req.body);
     });
 
     // Handle /api/tool endpoint as well, routing to the same transport
-    app.all('/api/tool', async (req, res) => {
+    app.post('/api/tool', async (req, res) => {
       await transport.handleRequest(req, res, req.body);
     });
 
