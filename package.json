@@ -20,7 +20,6 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.53.0",
     "@google/generative-ai": "^0.24.1",
-    "@mmlotfy/intellicodemcp": "^2.1.1",
     "@modelcontextprotocol/sdk": "^1.12.1",
     "chokidar": "^3.5.3",
     "fluent-ffmpeg": "^2.1.2",
