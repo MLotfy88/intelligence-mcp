@@ -1,6 +1,6 @@
 # intelligence-mcp
 
-# MCP Server Usage Guide for AI (Roo Code Intelligence)
+# MCP Server Usage Guide for AI (IntelliCodeMCP)
 
 ## 🎯 Project Overview
 
@@ -111,7 +111,7 @@ Here's an example of how to configure your server in a `claude_desktop_config.js
 ```json
 {
   "mcpServers": {
-    "roo-code-intelligence": {
+    "IntelliCodeMCP": {
       "serverUrl": "https://intelligence-mcp.onrender.com"
     }
   }
@@ -121,7 +121,7 @@ Here's an example of how to configure your server in a `claude_desktop_config.js
 
 ## 🔧 Available Tools and Detailed Usage
 
-The Roo Code Intelligence server provides a suite of powerful tools designed to enhance your AI's capabilities in code analysis and project management. Each tool is accessible via the MCP client.
+The IntelliCodeMCP server provides a suite of powerful tools designed to enhance your AI's capabilities in code analysis and project management. Each tool is accessible via the MCP client.
 
 ### 1. `code_intelligence_analyze`
 **Description**: The core three-phase code analysis engine: Inspection → Diagnosis → Execution.
@@ -287,7 +287,7 @@ const response = await fetch('http://your-server/api/tool-simple', {
 -   **Connection Issues**:
     -   Ensure the server is running (check the terminal where you ran `npm run start`).
     -   Ensure the `cwd` path in your MCP client configuration is correct and points to your project root.
-    -   Ensure the server name (`"roo-code-intelligence"`) in the client configuration matches the name specified in `src/index.ts`.
+    -   Ensure the server name (`"IntelliCodeMCP"`) in the client configuration matches the name specified in `src/index.ts`.
 -   **TypeScript Issues**:
     -   Ensure a correct `tsconfig.json` file exists in the project root.
     -   Ensure `tsconfig_path` in `.roo/code-intelligence.yaml` points to the correct path.

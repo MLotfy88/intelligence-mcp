@@ -1,182 +1,45 @@
-# API Contracts
+# API Contracts and Design Principles
 
-This document defines the API contracts for external services and internal MCP tools used by the Roo Code Intelligence Server.
+This document outlines the core API contracts and design principles for the IntelliCodeMCP project. All proposed code changes must adhere to these guidelines to ensure system stability, compatibility, and maintainability.
 
-## External API Contracts
+## 1. Naming Conventions
+- **Classes:** PascalCase (e.g., `MyClass`)
+- **Functions/Methods:** camelCase (e.g., `myFunction`)
+- **Variables:** camelCase (e.g., `myVariable`)
+- **Constants:** SCREAMING_SNAKE_CASE (e.g., `MY_CONSTANT`)
 
-### 1. SerpAPI
-- **Endpoint:** `https://serpapi.com/search`
-- **Method:** `GET` (or `POST` if using a client library that abstracts it)
-- **Authentication:** API Key (via `SERP_API_KEY` environment variable or `config.integrations.serpapi.api_key`)
-- **Request Parameters:**
-    - `q` (string, required): Search query.
-    - `api_key` (string, required): Your SerpAPI key.
-    - `num` (number, optional): Number of results to return (default: 10).
-    - `engine` (string, optional): Search engine (e.g., `google`, `bing`).
-- **Response Structure (simplified):**
-    ```json
-    {
-      "search_parameters": { ... },
-      "organic_results": [
-        {
-          "title": "...",
-          "link": "...",
-          "snippet": "...",
-          "source": "..."
-        },
-        // ... more results
-      ],
-      "related_searches": [ ... ],
-      // ... other fields
-    }
-    ```
+## 2. Type Safety
+- All TypeScript code must use explicit types where possible.
+- Avoid `any` type unless absolutely necessary and justified.
+- Interfaces and types should be defined for all data structures passed between modules or APIs.
 
-## Internal MCP Tool Contracts
+## 3. Error Handling
+- All asynchronous operations must include proper error handling (e.g., `try-catch` blocks, Promise rejections).
+- Errors should be logged with sufficient detail (timestamp, error message, stack trace).
+- User-facing errors should be clear and actionable.
 
-### 1. `code_intelligence_analyze`
-- **Description:** Three-phase code analysis: Inspection → Diagnosis → Execution.
-- **Input Schema:**
-    ```json
-    {
-      "type": "object",
-      "properties": {
-        "phase": { "type": "string", "enum": ["inspection", "diagnosis", "execution", "all"] },
-        "file_path": { "type": "string" },
-        "context_files": { "type": "array", "items": { "type": "string" } },
-        "priority_level": { "type": "string", "enum": ["P0", "P1", "P2"] }
-      },
-      "required": ["phase", "file_path"]
-    }
-    ```
-- **Output Schema (varies by phase):**
-    - `InspectionResult`: `fileContent`, `ast`, `metrics`
-    - `DiagnosisResult`: `errors`, `warnings`, `suggestions`
-    - `ExecutionResult`: `solutions`, `priority`
+## 4. Modularity and Separation of Concerns
+- Code should be organized into logical modules, each with a single responsibility.
+- Avoid tight coupling between modules.
+- Tools and workflows should be clearly separated.
 
-### 2. `memory_bank_manager`
-- **Description:** Manage structured memory files with auto-archiving.
-- **Input Schema:**
-    ```json
-    {
-      "type": "object",
-      "properties": {
-        "action": { "type": "string", "enum": ["read", "write", "update", "archive", "search"] },
-        "file_category": { "type": "string", "enum": ["core", "dynamic", "planning", "technical", "auto_generated"] },
-        "file_name": { "type": "string" },
-        "content": { "type": "string" },
-        "search_query": { "type": "string" }
-      },
-      "required": ["action", "file_category"]
-    }
-    ```
-- **Output Schema (varies by action):**
-    - `read`: `{ content: string }`
-    - `write`: `{ success: boolean, path: string }`
-    - `update`: `{ success: boolean, timestamp: string }`
-    - `archive`: `{ archived: Array<{ file: string, archived: string }> }`
-    - `search`: `{ results: Array<{ file: string, category: string }> }`
+## 5. Performance Considerations
+- Optimize critical paths for performance.
+- Avoid unnecessary computations or redundant data processing.
+- Consider caching mechanisms for frequently accessed data.
 
-### 3. `web_search_enhanced`
-- **Description:** Enhanced web search with result caching and context integration.
-- **Input Schema:**
-    ```json
-    {
-      "type": "object",
-      "properties": {
-        "query": { "type": "string" },
-        "search_type": { "type": "string", "enum": ["general", "code", "documentation", "error_solution"] },
-        "max_results": { "type": "number", "default": 10 }
-      },
-      "required": ["query", "search_type"]
-    }
-    ```
-- **Output Schema:** `{ type: string, results: Array<any> }`
+## 6. Security
+- Sanitize all user inputs to prevent injection attacks.
+- Protect sensitive data (e.g., API keys) using environment variables or secure configuration management.
+- Implement proper authentication and authorization where applicable.
 
-### 4. `sequential_thinking_process`
-- **Description:** Step-by-step problem solving with decision trees.
-- **Input Schema:**
-    ```json
-    {
-      "type": "object",
-      "properties": {
-        "problem_statement": { "type": "string" },
-        "thinking_depth": { "type": "number", "default": 3 },
-        "include_alternatives": { "type": "boolean", "default": true }
-      },
-      "required": ["problem_statement"]
-    }
-    ```
-- **Output Schema:** `{ status: string, message: string, problem_statement: string, thinking_depth: number, include_alternatives: boolean, steps: string[], decisions: string[], alternatives: string[] }`
+## 7. Documentation
+- All public functions, classes, and interfaces must have JSDoc comments explaining their purpose, parameters, and return values.
+- Key architectural decisions and complex logic should be documented in markdown files within the `intelligence/memory/technical/` directory.
 
-### 5. `eslint_analysis`
-- **Description:** Code quality analysis with auto-fix capabilities.
-- **Input Schema:**
-    ```json
-    {
-      "type": "object",
-      "properties": {
-        "file_path": { "type": "string" },
-        "auto_fix": { "type": "boolean", "default": false },
-        "rules_override": { "type": "object", "additionalProperties": true }
-      },
-      "required": ["file_path"]
-    }
-    ```
-- **Output Schema:** `{ results: Array<any>, summary: { totalErrors: number, totalWarnings: number, filesAnalyzed: number } }`
+## 8. Backward Compatibility
+- Major API changes should be versioned.
+- Minor changes should strive for backward compatibility.
 
-### 6. `typescript_diagnostics`
-- **Description:** TypeScript type checking and diagnostics.
-- **Input Schema:**
-    ```json
-    {
-      "type": "object",
-      "properties": {
-        "file_path": { "type": "string" },
-        "check_type": { "type": "string", "enum": ["syntax", "semantic", "all"] },
-        "include_suggestions": { "type": "boolean", "default": true }
-      },
-      "required": ["file_path", "check_type"]
-    }
-    ```
-- **Output Schema:** `{ diagnostics: { errors: Array<any>, warnings: Array<any>, suggestions: Array<any> }, summary: { errorCount: number, warningCount: number, suggestionCount: number } }`
-
-### 7. `roo_code_workflow`
-- **Description:** Execute complete Roo Code Intelligence workflow.
-- **Input Schema:**
-    ```json
-    {
-      "type": "object",
-      "properties": {
-        "workflow_type": { "type": "string", "enum": ["full_analysis", "quick_check", "context_condensing", "daily_digest"] },
-        "target_files": { "type": "array", "items": { "type": "string" } },
-        "priority_override": { "type": "string", "enum": ["P0", "P1", "P2"] },
-        "include_web_search": { "type": "boolean", "default": false }
-      },
-      "required": ["workflow_type", "target_files"]
-    }
-    ```
-- **Output Schema (varies by workflow_type):**
-    - `full_analysis`: `{ inspection: any, diagnosis: any, execution: any, external_tools: any }`
-    - `quick_check`: `{ eslint: any, typescript: any, summary: any }`
-    - `context_condensing`: `{ condensed: boolean, files: string[], results: Array<any> }`
-    - `daily_digest`: `{ generated: boolean, timestamp: string, message: string }`
-
-### 8. `daily_digest_generator`
-- **Description:** Generates a daily summary of completed tasks, key decisions, errors, and deadlines.
-- **Input Schema:** `{}`
-- **Output Schema:** `{ generated: boolean, timestamp: string, message: string }`
-
-### 9. `context_condensing_process`
-- **Description:** Condenses context from specified files based on a compression rate.
-- **Input Schema:**
-    ```json
-    {
-      "type": "object",
-      "properties": {
-        "target_files": { "type": "array", "items": { "type": "string" } },
-        "compression_rate": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.5 }
-      },
-      "required": ["target_files"]
-    }
-    ```
-- **Output Schema:** `{ status: string, message: string, results: Array<any> }`
+---
+**Last Updated:** 2025-06-09

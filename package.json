@@ -1,7 +1,7 @@
 {
-  "name": "roo-code-intelligence",
+  "name": "@mmlotfy/intellicodemcp",
   "version": "2.1.0",
-  "description": "Enhanced AI Code Intelligence Server with Multi-Tool Integration",
+  "description": "IntelliCodeMCP: A local MCP server enhancing Gemini 2.5 Flash with advanced AI capabilities and multi-tool integration.",
   "type": "module",
   "main": "dist/index.js",
   "exports": {
@@ -18,19 +18,26 @@
     "watch": "tsc -w"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.53.0",
+    "@google/generative-ai": "^0.24.1",
+    "@mmlotfy/intellicodemcp": "^2.1.0",
     "@modelcontextprotocol/sdk": "^1.12.1",
     "chokidar": "^3.5.3",
-    "express": "^5.1.0",
+    "fluent-ffmpeg": "^2.1.2",
     "fs-extra": "^11.1.1",
+    "node-cron": "^3.0.3",
+    "openai": "^4.0.0",
     "yaml": "^2.3.1"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
     "@types/eslint": "^9.6.1",
     "@types/express": "^5.0.3",
+    "@types/fluent-ffmpeg": "^2.1.24",
     "@types/fs-extra": "^11.0.1",
     "@types/jest": "^29.5.2",
     "@types/node": "^20.19.0",
+    "@types/node-cron": "^3.0.11",
     "@typescript-eslint/eslint-plugin": "^5.60.0",
     "@typescript-eslint/parser": "^5.60.0",
     "eslint": "^8.57.1",

@@ -1,8 +1,11 @@
 {
-  "mcpServers": {
-    "roo-code-intelligence": {
-      "type": "sse",
-      "url": "https://intelligence-mcp.onrender.com/mcp"
+    "mcpServers": {
+            "IntelliCodeMCP": {
+            "command": "npm",
+            "args": [
+                "i",
+                "@mmlotfy/intellicodemcp"
+            ]
+        }
     }
-  }
 }

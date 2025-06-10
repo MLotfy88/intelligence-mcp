@@ -2,6 +2,12 @@ import { logger } from '../utils/logger.js';
 import * as fs from 'fs/promises';
 import { Config, loadConfig } from '../utils/config-loader.js';
 import { getMemoryBankToolDefinition } from './memory-bank.js';
+import {
+  initializeOpenAIClient,
+  initializeGoogleClient,
+  initializeDeepSeekClient,
+  initializeAnthropicClient
+} from '../utils/llm-api-clients.js';
 
 interface ConversationSummarizerArgs {
   conversation_history: string;
@@ -45,65 +51,77 @@ export function getConversationSummarizerToolDefinition(): { name: string; descr
       const defaultCompressionRate = config.priorities.default_compression_rate || 0.5;
       const compressionRate = args.override_compression_rate || defaultCompressionRate;
 
-      // 1. Pre-Condensing Backup
+      // 1. Pre-Condensing Backup (Preservation Hierarchy P0)
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-      const backupFileName = `context-backup-${timestamp}.md`;
-      const backupPath = `${config.memory.archive.path}/${backupFileName}`;
+      const backupFileName = `session-backup-${timestamp}.md`;
+      // Ensure the backup path is within .intellicode/archive/auto_generated
+      const backupPath = `archive/auto_generated/${backupFileName}`;
       await memoryBankTool.handler({
         action: 'write',
-        file_category: 'auto_generated', // Assuming archive path is part of auto_generated for simplicity
+        file_category: 'auto_generated',
         file_name: backupPath,
         content: args.conversation_history
       });
-      logger.info(`Pre-condensing backup saved to ${backupPath}`);
+      logger.info(`Pre-condensing backup saved to .intellicode/${backupPath}`);
 
       let p0Content = '';
       let p1Content = '';
       let p2Content = '';
 
-      // Simple keyword-based priority extraction (placeholder for actual NLP/LLM logic)
+      // 2. Priority-based Content Extraction (Preservation Hierarchy)
+      const p0Keywords = config.priorities.P0 || [];
+      const p1Keywords = config.priorities.P1 || [];
+      const p2Keywords = config.priorities.P2 || [];
+
       const lines = args.conversation_history.split('\n');
       lines.forEach(line => {
-        if (line.includes('CODE') || line.includes('Handover Decisions') || line.includes('Project Plan Changes')) {
+        const lowerCaseLine = line.toLowerCase();
+        if (p0Keywords.some(keyword => lowerCaseLine.includes(keyword.toLowerCase()))) {
           p0Content += line + '\n';
-        } else if (line.includes('Memory Bank Updates') || line.includes('Critical Conflicts')) {
+        } else if (p1Keywords.some(keyword => lowerCaseLine.includes(keyword.toLowerCase()))) {
           p1Content += line + '\n';
+        } else if (p2Keywords.some(keyword => lowerCaseLine.includes(keyword.toLowerCase()))) {
+          p2Content += line + '\n';
         } else {
+          // Default to P2 if no specific keyword is found
           p2Content += line + '\n';
         }
       });
 
-      // 2. Tri-Phase Analysis & Dynamic Compression
+      // 3. Tri-Phase Analysis & Dynamic Compression (Condensing Protocol)
       // Phase 1: Extract and preserve [P0] items (full retention)
-      let summary = `### Critical Actions\n${p0Content}\n`;
+      let summary = `### Critical Actions\n${p0Content.trim()}\n\n`;
 
-      // Phase 2: Summarize [P1] items (partial retention)
-      const p1Summary = summarizeContent(p1Content, 1 - (compressionRate * 0.5)); // Less compression for P1
-      summary += `### Key Discussions (High Priority)\n${p1Summary}\n`;
+      // Phase 2: Summarize [P1] items (partial retention - 20% compression for P1)
+      const p1Summary = summarizeContent(p1Content, 0.8); // 80% retention for P1
+      summary += `### Key Discussions (High Priority)\n${p1Summary.trim()}\n\n`;
 
-      // Phase 3: Reduce [P2] content to semantic summaries
-      const p2Summary = summarizeContent(p2Content, 1 - (compressionRate * 0.8)); // More compression for P2
-      summary += `### General Discussion\n${p2Summary}\n`;
+      // Phase 3: Reduce [P2] content to semantic summaries (40% compression for P2)
+      const p2Summary = summarizeContent(p2Content, 0.6); // 60% retention for P2
+      summary += `### General Discussion\n${p2Summary.trim()}\n\n`;
 
-      // 3. Documentation & Validation Protocol
-      const draftFileName = `drafts/session-${new Date().toISOString().split('T')[0]}.md`;
-      const draftPath = `${config.memory.files.auto_generated[2]}/${draftFileName}`; // Assuming drafts is the 3rd auto_generated file
+      // 4. Documentation Protocol (Structured Summary Generation)
+      const summaryDate = new Date().toLocaleString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', timeZoneName: 'short' });
+      let finalSummaryContent = `[SESSION SUMMARY DRAFT]\n\n### 🗓️ Summary Date: ${summaryDate}\n\n${summary}`;
+
+      // Enhance summary with LLM if configured (Task 8.2)
+      finalSummaryContent = await enhanceSummaryWithLLM(finalSummaryContent, config);
+
+      const summaryFileName = `session-${new Date().toISOString().split('T')[0]}.md`;
+      const summaryFilePath = `docs/${summaryFileName}`; // Save to .intellicode/docs
+
       await memoryBankTool.handler({
         action: 'write',
-        file_category: 'auto_generated',
-        file_name: draftPath,
-        content: `[SESSION SUMMARY DRAFT]\n${summary}`
+        file_category: 'auto_generated', // This will be handled by memory-bank to go into .intellicode/docs
+        file_name: summaryFilePath,
+        content: finalSummaryContent
       });
-      logger.info(`Draft summary saved to ${draftPath}`);
+      logger.info(`Draft summary saved to .intellicode/${summaryFilePath}`);
 
-      // Present for Review (simulated)
-      logger.info(`\n[SESSION SUMMARY DRAFT]\nI have condensed our conversation. Before I finalize the log, please review this summary.\n\n${summary}\n\n**Is this summary accurate and complete? Please confirm or suggest edits before I commit.**`);
-
-      // Finalize (requires user confirmation in a real scenario)
-      if (args.output_file) {
-        await fs.writeFile(args.output_file, summary);
-        logger.info(`Finalized summary saved to ${args.output_file}`);
-      }
+      // 5. Validation Protocol (Confirmation Request)
+      // This part will be handled by the main server logic, which will present the summary to the user
+      // and await confirmation before finalizing. For now, we log the prompt.
+      logger.info(`\n[SESSION SUMMARY DRAFT]\nI have condensed our conversation. Before I finalize the log, please review this summary.\n\n${finalSummaryContent}\n\n**Is this summary accurate and complete? Please confirm or suggest edits before I commit.**`);
 
       return { summary: summary };
     }
@@ -112,7 +130,123 @@ export function getConversationSummarizerToolDefinition(): { name: string; descr
 
 // Placeholder for actual summarization logic (semantic summarization would use an LLM)
 function summarizeContent(content: string, retentionRate: number): string {
-  const words = content.split(/\s+/);
-  const retainedWordCount = Math.floor(words.length * retentionRate);
-  return words.slice(0, retainedWordCount).join(' ') + (words.length > retainedWordCount ? '...' : '');
+  if (!content.trim()) {
+    return '';
+  }
+
+  const lines = content.split('\n');
+  const prioritizedLines: string[] = [];
+  const otherLines: string[] = [];
+
+  lines.forEach(line => {
+    // Heuristic for critical information (code changes, file paths, conversation turns)
+    if (line.match(/^(\+|\-)\s*\S+/) || // Diff-like lines
+        line.includes('/') || line.includes('\\') || // Potential file paths
+        line.includes('User:') || line.includes('Model:') || // Conversation turns
+        line.includes('```')) { // Code blocks
+      prioritizedLines.push(line);
+    } else {
+      otherLines.push(line);
+    }
+  });
+
+  // Retain all prioritized lines
+  let summarizedContent = prioritizedLines.join('\n');
+
+  // Summarize other lines based on retention rate
+  const sentences = otherLines.join(' ').split(/(?<=[.!?])\s+/);
+  const retainedSentenceCount = Math.ceil(sentences.length * retentionRate);
+  const summarizedOtherContent = sentences.slice(0, retainedSentenceCount).join(' ') + (sentences.length > retainedSentenceCount ? '...' : '');
+
+  if (summarizedContent && summarizedOtherContent) {
+    return `${summarizedContent}\n${summarizedOtherContent}`;
+  } else if (summarizedContent) {
+    return summarizedContent;
+  } else {
+    return summarizedOtherContent;
+  }
+}
+
+import OpenAI from 'openai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import Anthropic from '@anthropic-ai/sdk';
+
+async function enhanceSummaryWithLLM(summary: string, config: Config): Promise<string> {
+  logger.info('Attempting to enhance summary with LLM...');
+  const preferredLlm = config.llm_apis?.preferred_llm;
+
+  let enhancedSummary = summary;
+
+  try {
+    switch (preferredLlm) {
+      case 'google':
+        if (config.llm_apis?.google?.api_key) {
+          logger.info('Using Google LLM for enhancement.');
+          const genAI = new GoogleGenerativeAI(config.llm_apis.google.api_key);
+          const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+          const result = await model.generateContent(`Enhance and refine the following summary, making it more concise and impactful:\n\n${summary}`);
+          enhancedSummary = result.response.text();
+        } else {
+          logger.warn('Google LLM preferred but API key not found.');
+        }
+        break;
+      case 'openai':
+        if (config.llm_apis?.openai?.api_key) {
+          logger.info('Using OpenAI LLM for enhancement.');
+          const openai = new OpenAI({ apiKey: config.llm_apis.openai.api_key });
+          const chatCompletion = await openai.chat.completions.create({
+            messages: [{ role: 'user', content: `Enhance and refine the following summary, making it more concise and impactful:\n\n${summary}` }],
+            model: 'gpt-4o',
+          });
+          enhancedSummary = chatCompletion.choices[0].message.content || summary;
+        } else {
+          logger.warn('OpenAI LLM preferred but API key not found.');
+        }
+        break;
+      case 'deepseek':
+        // DeepSeek API is often compatible with OpenAI API, so we can use the OpenAI client
+        if (config.llm_apis?.deepseek?.api_key && config.llm_apis?.deepseek?.base_url) {
+          logger.info('Using DeepSeek LLM for enhancement.');
+          const deepseek = new OpenAI({
+            apiKey: config.llm_apis.deepseek.api_key,
+            baseURL: config.llm_apis.deepseek.base_url,
+          });
+          const chatCompletion = await deepseek.chat.completions.create({
+            messages: [{ role: 'user', content: `Enhance and refine the following summary, making it more concise and impactful:\n\n${summary}` }],
+            model: 'deepseek-chat', // Or whatever DeepSeek model is appropriate
+          });
+          enhancedSummary = chatCompletion.choices[0].message.content || summary;
+        } else {
+          logger.warn('DeepSeek LLM preferred but API key or base URL not found.');
+        }
+        break;
+      case 'anthropic':
+        if (config.llm_apis?.anthropic?.api_key) {
+          logger.info('Using Anthropic LLM for enhancement.');
+          const anthropic = new Anthropic({ apiKey: config.llm_apis.anthropic.api_key });
+          const msg = await anthropic.messages.create({
+            model: "claude-3-opus-20240229", // Or whatever Anthropic model is appropriate
+            max_tokens: 1024,
+            messages: [{ role: "user", content: `Enhance and refine the following summary, making it more concise and impactful:\n\n${summary}` }],
+          });
+          enhancedSummary = msg.content.map(block => {
+            if (block.type === 'text') {
+              return block.text;
+            }
+            return ''; // Handle other block types if necessary
+          }).join('\n');
+        } else {
+          logger.warn('Anthropic LLM preferred but API key not found.');
+        }
+        break;
+      default:
+        logger.warn('No preferred LLM specified or API key not found for preferred LLM. Summary will not be enhanced by an LLM.');
+    }
+  } catch (error) {
+    logger.error(`Error enhancing summary with LLM (${preferredLlm}): ${(error as Error).message}`);
+    // Fallback to original summary if LLM enhancement fails
+    enhancedSummary = summary;
+  }
+
+  return enhancedSummary;
 }

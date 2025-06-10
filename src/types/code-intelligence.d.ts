@@ -47,7 +47,19 @@ interface ExecutionResult {
   priority: PriorityLevel;
 }
 
-type AnalysisResult = InspectionResult | DiagnosisResult | ExecutionResult;
+interface ConflictResult {
+  conflicts: Array<{
+    message: string;
+    type: 'schema_break' | 'plan_violation' | 'unsafe_type';
+    priority: 'P0' | 'P1' | 'P2';
+  }>;
+}
+
+interface MemoryMapResult {
+  memoryMapPath: string;
+}
+
+type AnalysisResult = InspectionResult | DiagnosisResult | ExecutionResult | ConflictResult | MemoryMapResult;
 
 export {
   Phase,
@@ -56,5 +68,7 @@ export {
   InspectionResult,
   DiagnosisResult,
   ExecutionResult,
-  AnalysisResult
+  ConflictResult,
+  AnalysisResult,
+  MemoryMapResult
 };

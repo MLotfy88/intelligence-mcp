@@ -11,7 +11,7 @@ Create a complete MCP (Model Context Protocol) Server for "Roo Code Intelligence
 
 ## Core MCP Server Implementation
 Create src/index.ts as main MCP server with:
-- Server initialization with name "roo-code-intelligence" version "2.1.0"
+- Server initialization with name "IntelliCodeMCP" version "2.1.0"
 - StdioServerTransport connection
 - Tool registration and request handlers for ListTools and CallTool
 - Error handling and logging
@@ -104,7 +104,7 @@ Make it production-ready with proper error handling, logging, and documentation.
 **أو يمكنك استخدام هذا الـ prompt المختصر:**
 
 ```
-Using GitHub Copilot, create a complete MCP Server project called "roo-code-intelligence-mcp" with:
+Using GitHub Copilot, create a complete MCP Server project called "IntelliCodeMCP" with:
 
 1. Full TypeScript/Node.js setup with @modelcontextprotocol/sdk
 2. 6 main tools: roo_code_workflow, code_intelligence_analyze, web_search_enhanced (SerpAPI), memory_bank_manager, eslint_analysis, typescript_diagnostics  
@@ -162,7 +162,7 @@ interface RooCodeIntelligenceServer {
 ```yaml
 # Load from .roo/code-intelligence.yaml
 server:
-  name: "roo-code-intelligence"
+  name: "IntelliCodeMCP"
   version: "2.1.0"
   description: "Enhanced AI Code Intelligence Server with Multi-Tool Integration"
   
@@ -513,7 +513,7 @@ class RooCodeWorkflow {
 ## 📦 Package Structure
 
 ```
-roo-code-intelligence-mcp/
+IntelliCodeMCP/
 ├── package.json
 ├── tsconfig.json
 ├── src/
@@ -556,7 +556,7 @@ npm run build
 # Register with MCP client
 echo '{
   "mcpServers": {
-    "roo-code-intelligence": {
+    "IntelliCodeMCP": {
       "command": "node",
       "args": ["./dist/index.js"],
       "env": {

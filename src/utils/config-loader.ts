@@ -46,11 +46,30 @@ export interface Config {
       timeout: string;
     };
   };
+  llm_apis: {
+    preferred_llm?: 'openai' | 'google' | 'deepseek' | 'anthropic';
+    openai?: {
+      api_key: string;
+      base_url?: string;
+    };
+    google?: {
+      api_key: string;
+      base_url?: string;
+    };
+    deepseek?: {
+      api_key: string;
+      base_url?: string;
+    };
+    anthropic?: {
+      api_key: string;
+      base_url?: string;
+    };
+  };
 }
 
 export async function loadConfig(): Promise<Config> {
   try {
-    const configPath = '.roo/code-intelligence.yaml';
+    const configPath = '.intellicode/code-intelligence.yaml';
     const configContent = await readFile(configPath, 'utf-8');
     const config = parse(configContent) as Config;
 
@@ -60,6 +79,24 @@ export async function loadConfig(): Promise<Config> {
       logger.info('SERP_API_KEY loaded from environment variables');
     } else {
       logger.warn('SERP_API_KEY not found in environment, using config file value');
+    }
+
+    // Override LLM API keys with environment variables if available
+    if (process.env.OPENAI_API_KEY && config.llm_apis.openai) {
+      config.llm_apis.openai.api_key = process.env.OPENAI_API_KEY;
+      logger.info('OPENAI_API_KEY loaded from environment variables');
+    }
+    if (process.env.GOOGLE_API_KEY && config.llm_apis.google) {
+      config.llm_apis.google.api_key = process.env.GOOGLE_API_KEY;
+      logger.info('GOOGLE_API_KEY loaded from environment variables');
+    }
+    if (process.env.DEEPSEEK_API_KEY && config.llm_apis.deepseek) {
+      config.llm_apis.deepseek.api_key = process.env.DEEPSEEK_API_KEY;
+      logger.info('DEEPSEEK_API_KEY loaded from environment variables');
+    }
+    if (process.env.ANTHROPIC_API_KEY && config.llm_apis.anthropic) {
+      config.llm_apis.anthropic.api_key = process.env.ANTHROPIC_API_KEY;
+      logger.info('ANTHROPIC_API_KEY loaded from environment variables');
     }
 
     return config;

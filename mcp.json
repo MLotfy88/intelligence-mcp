@@ -1,8 +1,18 @@
 {
   "mcpServers": {
-    "roo-code-intelligence": {
-      "type": "sse",
-      "url": "https://intelligence-mcp.onrender.com/mcp"
+    "IntelliCodeMCP": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@mmlotfy/IntelliCodeMCP"
+      ]
+    },
+    "sequential-thinking": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ]
     }
   }
 }
