@@ -1,33 +1,19 @@
 import { Config } from './config-loader.js';
 import { logger } from './logger.js';
+import OpenAI from 'openai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import Anthropic from '@anthropic-ai/sdk';
 
-// Placeholder interfaces for LLM clients
-interface OpenAIClient {
-  // Define OpenAI client methods here
-  // For now, just a placeholder
-  initialized: boolean;
-}
-
-interface GoogleClient {
-  // Define Google client methods here
-  initialized: boolean;
-}
-
-interface DeepSeekClient {
-  // Define DeepSeek client methods here
-  initialized: boolean;
-}
-
-interface AnthropicClient {
-  // Define Anthropic client methods here
-  initialized: boolean;
-}
+// Export actual LLM client types
+export type OpenAIClient = OpenAI;
+export type GoogleClient = GoogleGenerativeAI;
+export type DeepSeekClient = OpenAI; // DeepSeek API is often compatible with OpenAI API
+export type AnthropicClient = Anthropic;
 
 export function initializeOpenAIClient(config: Config): OpenAIClient | null {
   if (config.llm_apis?.openai?.api_key) {
     logger.info('Initializing OpenAI client...');
-    // Actual OpenAI client initialization logic would go here
-    return { initialized: true };
+    return new OpenAI({ apiKey: config.llm_apis.openai.api_key });
   }
   logger.warn('OpenAI API key not found in config. OpenAI client not initialized.');
   return null;
@@ -36,28 +22,28 @@ export function initializeOpenAIClient(config: Config): OpenAIClient | null {
 export function initializeGoogleClient(config: Config): GoogleClient | null {
   if (config.llm_apis?.google?.api_key) {
     logger.info('Initializing Google client...');
-    // Actual Google client initialization logic would go here
-    return { initialized: true };
+    return new GoogleGenerativeAI(config.llm_apis.google.api_key);
   }
   logger.warn('Google API key not found in config. Google client not initialized.');
   return null;
 }
 
 export function initializeDeepSeekClient(config: Config): DeepSeekClient | null {
-  if (config.llm_apis?.deepseek?.api_key) {
+  if (config.llm_apis?.deepseek?.api_key && config.llm_apis?.deepseek?.base_url) {
     logger.info('Initializing DeepSeek client...');
-    // Actual DeepSeek client initialization logic would go here
-    return { initialized: true };
+    return new OpenAI({
+      apiKey: config.llm_apis.deepseek.api_key,
+      baseURL: config.llm_apis.deepseek.base_url,
+    });
   }
-  logger.warn('DeepSeek API key not found in config. DeepSeek client not initialized.');
+  logger.warn('DeepSeek LLM preferred but API key or base URL not found. DeepSeek client not initialized.');
   return null;
 }
 
 export function initializeAnthropicClient(config: Config): AnthropicClient | null {
   if (config.llm_apis?.anthropic?.api_key) {
     logger.info('Initializing Anthropic client...');
-    // Actual Anthropic client initialization logic would go here
-    return { initialized: true };
+    return new Anthropic({ apiKey: config.llm_apis.anthropic.api_key });
   }
   logger.warn('Anthropic API key not found in config. Anthropic client not initialized.');
   return null;

@@ -200,7 +200,7 @@ async function checkConflicts(args: CodeIntelligenceArgs, proposedChanges: strin
 
     // 1. Type Safety: Avoid 'any' type unless justified
     // P1: Unsafe Type
-    if (args.file_path.endsWith('.ts') && proposedChanges.includes(': any') && !proposedChanges.includes('/* any justified */')) {
+    if (apiContractsContent.includes('Strict Type Enforcement') && args.file_path.endsWith('.ts') && proposedChanges.includes(': any') && !proposedChanges.includes('/* any justified */')) {
       conflicts.push({
         message: 'Usage of "any" type detected without justification in TypeScript file. Refer to API Contracts (Type Safety).',
         type: 'unsafe_type',
@@ -210,9 +210,9 @@ async function checkConflicts(args: CodeIntelligenceArgs, proposedChanges: strin
 
     // 2. Naming Conventions (simplified string check for common violations)
     // P1: Plan Violation (naming convention)
-    if (proposedChanges.match(/function\s+[A-Z][a-zA-Z0-9_]*\s*\(/) || // PascalCase function name
+    if (systemPatternsContent.includes('Standard Naming Conventions') && (proposedChanges.match(/function\s+[A-Z][a-zA-Z0-9_]*\s*\(/) || // PascalCase function name
         proposedChanges.match(/const\s+[a-z][a-zA-Z0-9]*_[a-zA-Z0-9]*/) // snake_case for non-constants
-    ) {
+    )) {
       conflicts.push({
         message: 'Potential naming convention violation detected. Refer to API Contracts (Naming Conventions).',
         type: 'plan_violation',
@@ -222,7 +222,7 @@ async function checkConflicts(args: CodeIntelligenceArgs, proposedChanges: strin
 
     // 3. Error Handling: Basic check for try-catch around async operations (very simplified)
     // P1: Plan Violation (error handling)
-    if (proposedChanges.includes('await ') && !proposedChanges.includes('try {') && !proposedChanges.includes('.catch(')) {
+    if (apiContractsContent.includes('Robust Error Handling') && proposedChanges.includes('await ') && !proposedChanges.includes('try {') && !proposedChanges.includes('.catch(')) {
       conflicts.push({
         message: 'Asynchronous operation detected without explicit try-catch or .catch(). Refer to API Contracts (Error Handling).',
         type: 'plan_violation',
@@ -232,7 +232,7 @@ async function checkConflicts(args: CodeIntelligenceArgs, proposedChanges: strin
 
     // 4. Security: Basic check for hardcoded API keys
     // P0: Schema Break (security vulnerability)
-    if (proposedChanges.match(/(API_KEY|SECRET|TOKEN)\s*=\s*['"].*['"]/i)) {
+    if (apiContractsContent.includes('Secure API Key Management') && proposedChanges.match(/(API_KEY|SECRET|TOKEN)\s*=\s*['"].*['"]/i)) {
       conflicts.push({
         message: 'Potential hardcoded sensitive information (API key/secret/token) detected. Use environment variables. Refer to API Contracts (Security).',
         type: 'schema_break', // Categorizing as schema_break due to critical security impact
@@ -246,7 +246,7 @@ async function checkConflicts(args: CodeIntelligenceArgs, proposedChanges: strin
     // P2: Plan Violation (modularity) - Lower priority as it's a heuristic
     // This check is more about the *size* of the proposed change, not its content.
     // If proposedChanges is a large string, it might indicate a monolithic change.
-    if (proposedChanges.length > 5000) { // Arbitrary threshold for "large change"
+    if (systemPatternsContent.includes('Modular Design Principles') && proposedChanges.length > 5000) { // Arbitrary threshold for "large change"
       conflicts.push({
         message: 'Very large proposed change detected. Consider breaking down into smaller, modular changes. Refer to System Patterns (Modular Design).',
         type: 'plan_violation',
@@ -261,7 +261,7 @@ async function checkConflicts(args: CodeIntelligenceArgs, proposedChanges: strin
 
     // 7. Structured Memory Management: Check for direct file system access outside memory-bank tool
     // P1: Plan Violation (memory management)
-    if (proposedChanges.includes('fs.readFile') && !args.file_path.includes('memory-bank.ts')) { // Simplified check
+    if (systemPatternsContent.includes('Centralized Memory Operations') && proposedChanges.includes('fs.readFile') && !args.file_path.includes('memory-bank.ts')) { // Simplified check
       conflicts.push({
         message: 'Direct file system access detected outside of memory-bank tool. Use memory_bank_manager for structured memory operations. Refer to System Patterns (Structured Memory Management).',
         type: 'plan_violation',

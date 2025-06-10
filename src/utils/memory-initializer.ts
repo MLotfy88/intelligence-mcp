@@ -3,6 +3,7 @@ import * as path from 'path';
 import { logger } from './logger.js';
 import { getMemoryBankToolDefinition } from '../tools/memory-bank.js';
 import { Config } from './config-loader.js';
+import { FileCategory } from '../types/memory-bank.d.js';
 
 const defaultMemoryFileContents = {
   'core/project-brief.md': `# Project Brief
@@ -51,37 +52,34 @@ This document outlines the core API contracts and design principles for your pro
 `
 };
 
-export async function initializeMemoryBank(config: Config): Promise<void> {
+export async function initializeMemoryBank(_config: Config): Promise<void> {
   const intellicodeDir = '.intellicode';
-  const memoryDir = path.join(intellicodeDir, 'memory');
+  const memoryBankTool = getMemoryBankToolDefinition(_config);
 
-  // Ensure the base .intellicode directory and its subdirectories exist
-  await fs.mkdir(path.join(intellicodeDir, 'memory', 'core'), { recursive: true });
-  await fs.mkdir(path.join(intellicodeDir, 'memory', 'dynamic'), { recursive: true });
-  await fs.mkdir(path.join(intellicodeDir, 'memory', 'planning'), { recursive: true });
-  await fs.mkdir(path.join(intellicodeDir, 'memory', 'technical'), { recursive: true });
-  await fs.mkdir(path.join(intellicodeDir, 'memory', 'auto_generated'), { recursive: true });
-  await fs.mkdir(path.join(intellicodeDir, 'memory', 'archive', 'core'), { recursive: true });
-  await fs.mkdir(path.join(intellicodeDir, 'memory', 'archive', 'dynamic'), { recursive: true });
-  await fs.mkdir(path.join(intellicodeDir, 'memory', 'archive', 'technical'), { recursive: true });
-  await fs.mkdir(path.join(intellicodeDir, 'memory', 'drafts'), { recursive: true });
+  // Ensure top-level .intellicode directories exist (not managed by memory_bank_manager categories)
   await fs.mkdir(path.join(intellicodeDir, 'docs'), { recursive: true });
   await fs.mkdir(path.join(intellicodeDir, 'conflict-resolution'), { recursive: true });
   await fs.mkdir(path.join(intellicodeDir, 'archive'), { recursive: true }); // Top-level archive for .intellicode
 
-  logger.info('Memory bank directories ensured to exist. Initializing missing default files...');
+  logger.info('Initializing missing default memory files...');
 
   for (const filePath in defaultMemoryFileContents) {
-    const fullPath = path.join(intellicodeDir, 'memory', filePath);
     const content = defaultMemoryFileContents[filePath as keyof typeof defaultMemoryFileContents];
+    const [category, fileName] = filePath.split('/');
 
     try {
-      await fs.access(fullPath);
-      logger.info(`Memory file already exists: ${fullPath}. Skipping creation.`);
+      // Attempt to read the file using the memory_bank_manager tool
+      await memoryBankTool.handler({ action: 'read', file_category: category as FileCategory, file_name: fileName });
+      logger.info(`Memory file already exists: .intellicode/memory/${filePath}. Skipping creation.`);
     } catch (error) {
-      // File does not exist, create it with default content
-      await fs.writeFile(fullPath, content, 'utf-8');
-      logger.info(`Created initial memory file: ${fullPath}`);
+      // If read fails (file doesn't exist), then write it using the memory_bank_manager tool
+      await memoryBankTool.handler({
+        action: 'write',
+        file_category: category as FileCategory,
+        file_name: fileName,
+        content: content
+      });
+      logger.info(`Created initial memory file: .intellicode/memory/${filePath}`);
     }
   }
   logger.info('Memory bank initialization complete.');

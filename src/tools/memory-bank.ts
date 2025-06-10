@@ -214,7 +214,7 @@ function getFilePath(category: FileCategory, fileName: string, _config: Config):
   return path.join('.intellicode', 'memory', category, fileName);
 }
 
-async function auditDaily(args: MemoryBankArgs, _config: Config): Promise<{ success: boolean; audit_log_path: string; message: string }> {
+async function auditDaily(_args: MemoryBankArgs, _config: Config): Promise<{ success: boolean; audit_log_path: string; message: string }> {
   logger.info('Starting daily memory file audit...');
   const auditLogPath = path.join('.intellicode', 'docs', 'memory-audit.md');
   let auditReport = `# Daily Memory Audit Report - ${new Date().toLocaleDateString()}\n\n`;
