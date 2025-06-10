@@ -104,7 +104,7 @@ Make it production-ready with proper error handling, logging, and documentation.
 **أو يمكنك استخدام هذا الـ prompt المختصر:**
 
 ```
-Using GitHub Copilot, create a complete MCP Server project called "IntelliCodeMCP-mcp" with:
+Using GitHub Copilot, create a complete MCP Server project called "IntelliCodeMCP" with:
 
 1. Full TypeScript/Node.js setup with @modelcontextprotocol/sdk
 2. 6 main tools: roo_code_workflow, code_intelligence_analyze, web_search_enhanced (SerpAPI), memory_bank_manager, eslint_analysis, typescript_diagnostics  
@@ -513,7 +513,7 @@ class RooCodeWorkflow {
 ## 📦 Package Structure
 
 ```
-IntelliCodeMCP-mcp/
+IntelliCodeMCP/
 ├── package.json
 ├── tsconfig.json
 ├── src/

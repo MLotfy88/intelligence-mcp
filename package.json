@@ -1,6 +1,6 @@
 {
   "name": "@mmlotfy/intellicodemcp",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "IntelliCodeMCP: A local MCP server enhancing Gemini 2.5 Flash with advanced AI capabilities and multi-tool integration.",
   "type": "module",
   "main": "dist/index.js",
@@ -20,7 +20,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.53.0",
     "@google/generative-ai": "^0.24.1",
-    "@mmlotfy/intellicodemcp": "^2.1.0",
+    "@mmlotfy/intellicodemcp": "^2.1.1",
     "@modelcontextprotocol/sdk": "^1.12.1",
     "chokidar": "^3.5.3",
     "fluent-ffmpeg": "^2.1.2",
