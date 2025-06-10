@@ -27,7 +27,7 @@ export function getMemoryBankToolDefinition(_config: Config): { name: string; de
       properties: {
         action: {
           type: 'string',
-          enum: ['read', 'write', 'update', 'archive', 'search', 'external_search', 'process_multimedia']
+          enum: ['read', 'write', 'update', 'archive', 'search', 'external_search', 'process_multimedia', 'audit_daily']
         },
         file_category: {
           type: 'string',

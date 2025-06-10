@@ -11,7 +11,7 @@ export function getMasterWorkflowToolDefinition(_config: Config): { name: string
       properties: {
         workflow_type: {
           type: 'string',
-          enum: ['full_analysis', 'quick_check', 'context_condensing', 'daily_digest']
+          enum: ['full_analysis', 'quick_check', 'context_condensing', 'daily_digest', 'generate_memory_map']
         },
         target_files: {
           type: 'array',
@@ -41,6 +41,8 @@ export function getMasterWorkflowToolDefinition(_config: Config): { name: string
             return await contextCondensing(args, context.call, _config);
           case 'daily_digest':
             return await dailyDigest(args, context.call, _config);
+          case 'generate_memory_map':
+            return await generateMemoryMapWorkflow(args, context.call, _config);
           default:
             throw new Error(`Invalid workflow type: ${args.workflow_type}`);
         }
@@ -53,6 +55,9 @@ export function getMasterWorkflowToolDefinition(_config: Config): { name: string
 }
 
 async function fullAnalysis(args: WorkflowArgs, call: (toolName: string, toolArgs: Record<string, unknown>) => Promise<unknown>, config: Config): Promise<unknown> {
+  if (!args.target_files || args.target_files.length === 0) {
+    throw new Error('target_files is required for full_analysis workflow.');
+  }
   // Phase 1: Inspection
   const inspectionResults = await call('code_intelligence_analyze', {
     phase: 'inspection',
@@ -121,6 +126,9 @@ async function fullAnalysis(args: WorkflowArgs, call: (toolName: string, toolArg
 }
 
 async function quickCheck(args: WorkflowArgs, call: (toolName: string, toolArgs: Record<string, unknown>) => Promise<unknown>, _config: Config): Promise<unknown> {
+  if (!args.target_files || args.target_files.length === 0) {
+    throw new Error('target_files is required for quick_check workflow.');
+  }
   const [lintResults, tsResults] = await Promise.all([
     call('eslint_analysis', {
       file_path: args.target_files[0],
@@ -187,4 +195,12 @@ function generateQuickSummary(lintResults: LintResults, tsResults: TypeScriptRes
     needsAttention: (lintResults.summary?.totalErrors || 0) > 0 ||
                    (tsResults.summary?.errorCount || 0) > 0
   };
+}
+
+async function generateMemoryMapWorkflow(args: WorkflowArgs, call: (toolName: string, toolArgs: Record<string, unknown>) => Promise<unknown>, _config: Config): Promise<unknown> {
+  if (!args.target_files || args.target_files.length === 0) {
+    throw new Error('target_files is required for generate_memory_map workflow.');
+  }
+  logger.info(`Generating memory map for: ${args.target_files[0]}`);
+  return await call('generate_memory_map', { file_path: args.target_files[0] });
 }

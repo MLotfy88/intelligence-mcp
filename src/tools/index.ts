@@ -9,6 +9,7 @@ import { getMasterWorkflowToolDefinition } from '../workflows/master-workflow.js
 import { getDailyDigestToolDefinition } from '../workflows/daily-digest.js';
 import { getContextCondensingToolDefinition } from '../workflows/context-condensing.js';
 import { getConversationSummarizerToolDefinition } from './conversation-summarizer.js';
+import { getMemoryMapToolDefinition } from './code-intelligence.js'; // Import the memory map tool
 import { logger } from '../utils/logger.js';
 
 export function getToolDefinitions(config: Config): Array<{ name: string; description: string; schema: object; handler: unknown }> {
@@ -22,7 +23,8 @@ export function getToolDefinitions(config: Config): Array<{ name: string; descri
     getMasterWorkflowToolDefinition(config),
     getDailyDigestToolDefinition(config),
     getContextCondensingToolDefinition(config),
-    getConversationSummarizerToolDefinition()
+    getConversationSummarizerToolDefinition(),
+    getMemoryMapToolDefinition() // Add the memory map tool here
   ];
   logger.info('All tool definitions collected successfully');
   return tools;

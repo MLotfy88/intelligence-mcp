@@ -2,17 +2,11 @@ import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { loadConfig } from './utils/config-loader.js';
 import { getToolDefinitions } from './tools/index.js';
-import { getMemoryBankToolDefinition } from './tools/memory-bank.js'; // Import directly
 import { handleError } from './utils/error-handler.js';
 import { logger } from './utils/logger.js';
-import { readFile } from 'fs/promises';
 import chokidar from 'chokidar';
 import cron from 'node-cron';
-import { getSequentialThinkingToolDefinition } from './tools/sequential-thinking.js'; // Import the specific tool definition
-import { getDailyDigestToolDefinition } from './workflows/daily-digest.js'; // Import the daily digest tool definition
-import { getMemoryMapToolDefinition } from './tools/code-intelligence.js'; // Import the memory map tool definition
-import { getConversationSummarizerToolDefinition } from './tools/conversation-summarizer.js'; // Import the conversation summarizer tool definition
-import { initializeMemoryBank } from './utils/memory-initializer.js'; // Import the memory initializer
+import { initializeMemoryBank } from './utils/memory-initializer.js';
 
 async function main(): Promise<void> {
   try {
@@ -47,9 +41,29 @@ async function main(): Promise<void> {
       if (!tool || typeof tool.handler !== 'function') {
         throw new Error(`Tool '${toolName}' not found or does not have a handler.`);
       }
-      // Pass a context object that includes the callToolFunction itself for nested calls
       return await tool.handler(toolArgs, { call: callToolFunction });
     };
+
+    // Handle incoming messages via stdin
+    process.stdin.setEncoding('utf-8');
+    process.stdin.on('data', (data: string) => {
+      const message = data.trim();
+      if (message) {
+        conversationHistory.push(message);
+        messageCount++;
+        logger.info(`Received message #${messageCount}: ${message}`);
+
+        if (messageCount >= 100) { // Trigger summarization at 100 messages
+          callToolFunction('conversation_summarizer', {
+            conversation_history: conversationHistory.join('\n'),
+            summary_type: 'detailed'
+          }).catch(error => handleError('Conversation summarization failed', error));
+          conversationHistory = []; // Reset history
+          messageCount = 0; // Reset counter
+          logger.info('Conversation summarization triggered.');
+        }
+      }
+    });
 
     // Integrate file change monitoring (chokidar)
     const watcher = chokidar.watch(['src/**/*.ts', 'src/**/*.md'], {
@@ -58,44 +72,25 @@ async function main(): Promise<void> {
     });
 
     watcher.on('change', async (path) => {
-      logger.info(`File ${path} has been changed. Triggering code intelligence analysis.`);
+      logger.info(`File ${path} has been changed. Triggering roo_code_workflow quick check.`);
+      await callToolFunction('roo_code_workflow', { workflow_type: 'quick_check', target_files: [path] }).catch(error => handleError(`Quick check for ${path} failed`, error));
     });
 
     logger.info('File change monitoring initialized for .ts and .md files in src/.');
 
     // Schedule periodic tasks (node-cron)
-    // Schedule a daily digest generation at a specific time (e.g., 00:00 AM daily)
     cron.schedule('0 0 * * *', async () => {
-      logger.info('Generating daily memory digest...');
-      const dailyDigestTool = getDailyDigestToolDefinition(config);
-      if (dailyDigestTool && typeof dailyDigestTool.handler === 'function') {
-        await dailyDigestTool.handler({}, { call: callToolFunction });
-        logger.info('Daily memory digest generated successfully.');
-      } else {
-        logger.error('Daily digest tool definition or handler is missing or not a function.');
-      }
-
-      logger.info('Performing daily memory audit...');
-      const memoryBankTool = getMemoryBankToolDefinition(config);
-      if (memoryBankTool && typeof memoryBankTool.handler === 'function') {
-        await memoryBankTool.handler({ action: 'audit_daily', file_category: 'auto_generated', file_name: 'memory-audit.md' });
-        logger.info('Daily memory audit completed successfully.');
-      } else {
-        logger.error('Memory bank manager tool definition or handler is missing or not a function for audit.');
-      }
+      logger.info('Generating daily memory digest and performing daily memory audit...');
+      await callToolFunction('roo_code_workflow', { workflow_type: 'daily_digest' }).catch(error => handleError('Daily memory digest generation failed', error));
+      await callToolFunction('memory_bank_manager', { action: 'audit_daily', file_category: 'auto_generated', file_name: 'memory-audit.md' }).catch(error => handleError('Daily memory audit failed', error));
+      logger.info('Daily memory digest and audit completed successfully.');
     });
     logger.info('Daily memory digest generation and audit scheduled.');
 
-    // Schedule weekly memory map generation (e.g., every Sunday at 00:00 AM)
     cron.schedule('0 0 * * 0', async () => {
       logger.info('Generating weekly memory map...');
-      const memoryMapTool = getMemoryMapToolDefinition();
-      if (memoryMapTool && typeof memoryMapTool.handler === 'function') {
-        await memoryMapTool.handler({ file_path: 'src/index.ts', phase: 'inspection' });
-        logger.info('Weekly memory map generated successfully.');
-      } else {
-        logger.error('Memory map tool definition or handler is missing or not a function.');
-      }
+      await callToolFunction('roo_code_workflow', { workflow_type: 'generate_memory_map', target_files: ['src/index.ts'] }).catch(error => handleError('Weekly memory map generation failed', error));
+      logger.info('Weekly memory map generated successfully.');
     });
     logger.info('Weekly memory map generation scheduled.');
 

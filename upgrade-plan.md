@@ -146,6 +146,9 @@ To develop IntelliCodeMCP as a local package `@mmlotfy/IntelliCodeMCP` runnable 
         -   `(✅) 6.3 Add multimedia support (e.g., audio files):**
             -   **Objective:**
                 Enable saving and processing non-text files (e.g., converting audio files to `.mp3` using `ffmpeg`).
+        -   `(✅) 6.4 Update 'memory_bank_manager' schema in \`src/tools/memory-bank.ts\`:**
+            -   **Objective:**
+                Include 'audit_daily' action in the tool's schema for proper validation and client communication.
 
 **✅ 7. Main Task: Improve Conversation Summarizer Tool (`conversation_summarizer`)**
     -   **Main Objective:**
@@ -186,6 +189,17 @@ To develop IntelliCodeMCP as a local package `@mmlotfy/IntelliCodeMCP` runnable 
         -   `(✅) 8.4 Document API key acquisition and usage:**
             -   **Objective:**
                 Guide users on how to obtain API keys for supported models and configure them in the project.
+
+**✅ 8.5 Main Task: Enhance Master Workflow Tool (\`roo_code_workflow\`)**
+    -   **Main Objective:**
+        Ensure the master workflow tool correctly orchestrates all analysis and reporting processes, including newly integrated functionalities.
+    -   **Sub-Tasks:**
+        -   `(✅) 8.5.1 Add 'generate_memory_map' workflow type to \`src/workflows/master-workflow.ts\` and \`src/types/master-workflow.d.ts\`:**
+            -   **Objective:**
+                Enable the master workflow to trigger memory map generation.
+        -   `(✅) 8.5.2 Implement 'target_files' validation in \`fullAnalysis\` and \`quickCheck\` workflows:**
+            -   **Objective:**
+                Ensure required input files are present for analysis workflows.
 
 ---
 
@@ -229,6 +243,9 @@ To develop IntelliCodeMCP as a local package `@mmlotfy/IntelliCodeMCP` runnable 
         -   `(✅) 11.2 Schedule weekly memory map generation in \`src/index.ts\`:**
             -   **Objective:**
                 Periodically update the memory map to reflect the current system state.
+        -   `(✅) 11.3 Register 'generate_memory_map' as an MCP tool in \`src/tools/index.ts\`:**
+            -   **Objective:**
+                Ensure the memory map generation functionality is exposed and managed as a formal MCP tool.
         -   **(Note: Details for AUDIT MODE require further clarification to define specific sub-tasks)**
 
 ---
