@@ -1,13 +1,11 @@
 {
   "mcpServers": {
-    "sequential-thinking": {
-      "command": "npx",
+    "IntelliCodeMCP": {
+      "type": "stdio",
+      "command": "npm",
       "args": [
-        "-y",
-        "@modelcontextprotocol/server-sequential-thinking"
-      ],
-      "alwaysAllow": [
-        "sequentialthinking"
+        "i",
+        "@mmlotfy/intellicodemcp"
       ]
     }
   }

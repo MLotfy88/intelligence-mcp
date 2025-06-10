@@ -1,11 +1,12 @@
 {
-    "mcpServers": {
-            "IntelliCodeMCP": {
-            "command": "npm",
-            "args": [
-                "i",
-                "@mmlotfy/intellicodemcp"
-            ]
-        }
+  "mcpServers": {
+    "IntelliCodeMCP": {
+      "type": "stdio",
+      "command": "npm",
+      "args": [
+        "i",
+        "@mmlotfy/intellicodemcp"
+      ]
     }
+  }
 }
