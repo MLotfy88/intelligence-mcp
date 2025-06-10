@@ -1,6 +1,6 @@
 {
   "name": "@mmlotfy/intellicodemcp",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "description": "IntelliCodeMCP: A local MCP server enhancing Gemini 2.5 Flash with advanced AI capabilities and multi-tool integration.",
   "type": "module",
   "main": "dist/index.js",
