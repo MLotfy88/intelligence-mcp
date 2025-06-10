@@ -2,7 +2,7 @@
   "mcpServers": {
     "IntelliCodeMCP": {
       "type": "stdio",
-      "command": "npm",
+      "command": "npx",
       "args": [
         "i",
         "@mmlotfy/intellicodemcp"

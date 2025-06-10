@@ -1,0 +1,61 @@
+# Default configuration for IntelliCodeMCP
+behavior:
+  confirmation_required: true
+  skip_confirmation: false
+  deferred_actions:
+    review_period: 24h
+priorities:
+  P0: []
+  P1: []
+  P2: []
+digest:
+  trigger_time: "17:00 EEST"
+  weekly_trigger: "Friday 17:00 EEST"
+  enabled: true
+integration:
+  vscode:
+    watch_files:
+      - "src/**/*.ts"
+      - "src/**/*.md"
+    git_integration: true
+  rag:
+    priority_files:
+      - "api-contracts.md"
+    context_depth: 5
+  serpapi:
+    api_key: "c116c10cb67d15b8304c63c935346412ccd7457605b918eb3f69e8cf1db53760" # Placeholder for SerpAPI key
+memory:
+  files:
+    core:
+      - "project-brief.md"
+      - "tech-context.md"
+      - "system-patterns.md"
+    dynamic:
+      - "active-context.md"
+      - "progress.md"
+      - "handover.md"
+    planning:
+      - "project-plan.md"
+      - "roadmap.md"
+    technical:
+      - "error-log.md"
+      - "dependency-map.md"
+      - "api-contracts.md"
+    auto_generated:
+      - "session-YYYY-MM-DD.md"
+      - "daily-digest.md"
+      - "drafts/session-YYYY-MM-DD.md"
+  archive:
+    retention_period: "30d"
+    path: "archive"
+llm_apis:
+  preferred_llm: "google"
+  google:
+    api_key: "YOUR_GOOGLE_API_KEY"
+  openai:
+    api_key: "YOUR_OPENAI_API_KEY"
+  anthropic:
+    api_key: "YOUR_ANTHROPIC_API_KEY"
+  deepseek:
+    api_key: "YOUR_DEEPSEEK_API_KEY"
+    base_url: "https://api.deepseek.com"
