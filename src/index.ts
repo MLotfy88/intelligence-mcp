@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { loadConfig } from './utils/config-loader.js';
@@ -11,7 +12,59 @@ import { initializeMemoryBank } from './utils/memory-initializer.js';
 async function main(): Promise<void> {
   try {
     const config = await loadConfig();
+    const tools = getToolDefinitions(config);
 
+    // Define a helper function to call tools internally
+    const callToolFunction = async (toolName: string, toolArgs: Record<string, unknown>): Promise<unknown> => {
+      const tool = tools.find(t => t.name === toolName);
+      if (!tool || typeof tool.handler !== 'function') {
+        throw new Error(`Tool '${toolName}' not found or does not have a handler.`);
+      }
+      return await tool.handler(toolArgs, { call: callToolFunction });
+    };
+
+    // Handle CLI arguments for direct tool execution (npx intellicodemcp <command>)
+    const args = process.argv.slice(2); // Get arguments after 'node index.js'
+    if (args.length > 0) {
+      const command = args[0];
+      switch (command) {
+        case 'workflow':
+          if (args.length < 2) {
+            logger.error('Usage: npx intellicodemcp workflow <workflow_type> [target_files...]');
+            process.exit(1);
+          }
+          const workflowType = args[1];
+          const targetFiles = args.slice(2);
+          logger.info(`Executing roo_code_workflow: ${workflowType} with target files: ${targetFiles.join(', ')}`);
+          await callToolFunction('roo_code_workflow', { workflow_type: workflowType, target_files: targetFiles.length > 0 ? targetFiles : undefined })
+            .then(result => {
+              logger.info('Workflow executed successfully:', result);
+              process.exit(0);
+            })
+            .catch(error => {
+              handleError(`Workflow execution failed for ${workflowType}`, error);
+              process.exit(1);
+            });
+          break;
+        case 'initialize-memory-bank':
+          logger.info('Initializing memory bank...');
+          await initializeMemoryBank(config)
+            .then(() => {
+              logger.info('Memory bank initialization completed.');
+              process.exit(0);
+            })
+            .catch(error => {
+              handleError('Memory bank initialization failed', error);
+              process.exit(1);
+            });
+          break;
+        default:
+          logger.warn(`Unknown command: ${command}. Starting MCP server in interactive mode.`);
+          // Fall through to interactive mode
+      }
+    }
+
+    // If no specific CLI command, start the interactive MCP server
     let conversationHistory: string[] = [];
     let messageCount = 0;
     if (process.env.SERP_API_KEY) {
@@ -19,11 +72,10 @@ async function main(): Promise<void> {
       logger.info('SERP_API_KEY loaded from environment variables');
     }
 
-    // Initialize the memory bank for the user's project
+    // Initialize the memory bank for the user's project (only if not done via CLI command)
+    // This ensures it's always initialized for interactive mode
     await initializeMemoryBank(config);
     logger.info('Memory bank initialization checked and completed if necessary.');
-
-    const tools = getToolDefinitions(config);
 
     const transport = new StdioServerTransport();
     const server = new Server({
@@ -34,15 +86,6 @@ async function main(): Promise<void> {
 
     await server.connect(transport);
     logger.info('MCP Server connected via StdioServerTransport.');
-
-    // Define a helper function to call tools internally
-    const callToolFunction = async (toolName: string, toolArgs: Record<string, unknown>): Promise<unknown> => {
-      const tool = tools.find(t => t.name === toolName);
-      if (!tool || typeof tool.handler !== 'function') {
-        throw new Error(`Tool '${toolName}' not found or does not have a handler.`);
-      }
-      return await tool.handler(toolArgs, { call: callToolFunction });
-    };
 
     // Handle incoming messages via stdin
     process.stdin.setEncoding('utf-8');

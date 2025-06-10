@@ -4,6 +4,9 @@
   "description": "IntelliCodeMCP: A local MCP server enhancing Gemini 2.5 Flash with advanced AI capabilities and multi-tool integration.",
   "type": "module",
   "main": "dist/index.js",
+  "bin": {
+    "intellicodemcp": "./dist/index.js"
+  },
   "exports": {
     ".": {
       "import": "./dist/index.js",
