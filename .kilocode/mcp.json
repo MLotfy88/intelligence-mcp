@@ -4,8 +4,7 @@
       "type": "stdio",
       "command": "npx",
       "args": [
-        "i",
-        "@mmlotfy/intellicodemcp"
+        "@mmlotfy/intellicodemcp@latest"
       ]
     }
   }

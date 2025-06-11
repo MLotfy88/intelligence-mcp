@@ -85,9 +85,10 @@ async function main(): Promise<void> {
     });
 
     await server.connect(transport);
-    logger.info('MCP Server connected via StdioServerTransport.');
+    logger.info('MCP Server connected via StdioServerTransport. Starting stdin listener, file watchers, and cron jobs...');
 
     // Handle incoming messages via stdin
+    logger.debug('Setting up stdin listener...');
     process.stdin.setEncoding('utf-8');
     process.stdin.on('data', (data: string) => {
       const message = data.trim();
@@ -109,6 +110,7 @@ async function main(): Promise<void> {
     });
 
     // Integrate file change monitoring (chokidar)
+    logger.debug('Setting up file change monitoring...');
     const watcher = chokidar.watch(['src/**/*.ts', 'src/**/*.md'], {
       ignored: /(^|[\/\\])\../, // ignore dotfiles
       persistent: true
@@ -122,6 +124,7 @@ async function main(): Promise<void> {
     logger.info('File change monitoring initialized for .ts and .md files in src/.');
 
     // Schedule periodic tasks (node-cron)
+    logger.debug('Scheduling daily cron job...');
     cron.schedule('0 0 * * *', async () => {
       logger.info('Generating daily memory digest and performing daily memory audit...');
       await callToolFunction('roo_code_workflow', { workflow_type: 'daily_digest' }).catch(error => handleError('Daily memory digest generation failed', error));
@@ -130,6 +133,7 @@ async function main(): Promise<void> {
     });
     logger.info('Daily memory digest generation and audit scheduled.');
 
+    logger.debug('Scheduling weekly cron job...');
     cron.schedule('0 0 * * 0', async () => {
       logger.info('Generating weekly memory map...');
       await callToolFunction('roo_code_workflow', { workflow_type: 'generate_memory_map', target_files: ['src/index.ts'] }).catch(error => handleError('Weekly memory map generation failed', error));

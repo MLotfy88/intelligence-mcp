@@ -55,7 +55,7 @@ class Logger {
     const details = entry.details ? JSON.stringify(entry.details, null, 2) : '';
 
     // eslint-disable-next-line no-console
-    console.log(`${color}${timestamp}${entry.level.toUpperCase()}: ${entry.message}${reset}${details ? '\n' + details : ''}`);
+    console.error(`${color}${timestamp}${entry.level.toUpperCase()}: ${entry.message}${reset}${details ? '\n' + details : ''}`);
   }
 
   info(message: string, details?: unknown): void {
